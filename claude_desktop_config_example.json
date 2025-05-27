@@ -1,0 +1,7 @@
+{
+  "mcpServers": {
+    "jw-mcp": {
+      "command": "/Users/<username>/jw-mcp/start-server.sh"
+    }
+  }
+} 

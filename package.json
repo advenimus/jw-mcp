@@ -1,0 +1,20 @@
+{
+  "name": "jw-mcp",
+  "version": "1.0.0",
+  "description": "MCP server for fetching JW.org video captions",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "bin": {
+    "jw-mcp": "./src/index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^0.5.0",
+    "node-fetch": "^3.3.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0"
+  }
+} 
