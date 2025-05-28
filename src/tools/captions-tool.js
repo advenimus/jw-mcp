@@ -3,24 +3,66 @@ import fetch from 'node-fetch';
 // Tool definition
 export const captionsTool = {
   name: 'get_jw_captions',
-  description: 'Fetches video captions from JW.org by video ID',
+  description: 'Fetches video captions from JW.org by video ID or URL. Accepts either a direct video ID (e.g., "pub-jwbvod25_17_VIDEO") or a JW.org URL (e.g., "https://www.jw.org/finder?srcid=jwlshare&wtlocale=E&lank=pub-jwbvod25_17_VIDEO")',
   inputSchema: {
     type: 'object',
     properties: {
       video_id: {
         type: 'string',
-        description: 'The JW.org video ID',
+        description: 'The JW.org video ID or a JW.org URL containing the video ID. If a URL is provided, the video ID will be automatically extracted.',
       },
     },
     required: ['video_id'],
   },
 };
 
+/**
+ * Extract video ID from JW.org URL or return the input if it's already a video ID
+ */
+function extractVideoId(input) {
+  // If it's already a video ID (doesn't contain http/https), return as-is
+  if (!input.includes('http')) {
+    return input;
+  }
+  
+  // Extract video ID from various JW.org URL formats
+  try {
+    const url = new URL(input);
+    
+    // Check for 'lank' parameter (most common format)
+    const lank = url.searchParams.get('lank');
+    if (lank) {
+      return lank;
+    }
+    
+    // Check for 'docid' parameter (alternative format)
+    const docid = url.searchParams.get('docid');
+    if (docid) {
+      return docid;
+    }
+    
+    // Check if video ID is in the pathname
+    const pathMatch = url.pathname.match(/\/(pub-[^\/]+)/);
+    if (pathMatch) {
+      return pathMatch[1];
+    }
+    
+    // If no video ID found, return the original input and let the API handle the error
+    return input;
+  } catch (error) {
+    // If URL parsing fails, assume it's a direct video ID
+    return input;
+  }
+}
+
 // Tool implementation
 export async function getCaptionsImplementation(video_id) {
   try {
+    // Extract video ID from URL if needed
+    const extractedVideoId = extractVideoId(video_id);
+    
     // Step 1: Get JSON data for JW video
-    const mediaUrl = `https://b.jw-cdn.org/apis/mediator/v1/media-items/E/${video_id}?clientType=www`;
+    const mediaUrl = `https://b.jw-cdn.org/apis/mediator/v1/media-items/E/${extractedVideoId}?clientType=www`;
     const mediaResponse = await fetch(mediaUrl);
     
     if (!mediaResponse.ok) {
@@ -28,7 +70,7 @@ export async function getCaptionsImplementation(video_id) {
         content: [
           {
             type: 'text',
-            text: `Failed to fetch video data: ${mediaResponse.statusText}`,
+            text: `Failed to fetch video data for ID "${extractedVideoId}": ${mediaResponse.statusText}`,
           },
         ],
       };

@@ -122,20 +122,32 @@ Download RTF content for specific Watchtower articles.
 ### 🎥 Video Caption Tools
 
 #### `get_jw_captions`
-Fetches video captions and metadata by video ID.
+Fetches video captions and metadata by video ID or URL.
 
 **Input:**
-- `video_id` (required): The JW.org video ID
+- `video_id` (required): Either a direct JW.org video ID or a JW.org URL
+
+**Supported Input Formats:**
+- **Direct video ID**: `pub-jwbvod25_17_VIDEO`
+- **JW.org finder URL**: `https://www.jw.org/finder?srcid=jwlshare&wtlocale=E&lank=pub-jwbvod25_17_VIDEO`
+- **JW.org library URL**: `https://www.jw.org/en/library/videos/?docid=pub-jwbvod25_17_VIDEO`
+- **JW.org direct link**: `https://www.jw.org/en/library/videos/pub-jwbvod25_17_VIDEO/`
 
 **Output:**
 - `title`: Video title
 - `thumbnail`: Thumbnail image URL  
 - `subtitles`: Complete subtitle content (VTT format)
 
-**Example:**
+**Examples:**
 ```json
+// Using direct video ID
 {
-  "video_id": "YOUR_VIDEO_ID_HERE"
+  "video_id": "pub-jwbvod25_17_VIDEO"
+}
+
+// Using JW.org URL (video ID automatically extracted)
+{
+  "video_id": "https://www.jw.org/finder?srcid=jwlshare&wtlocale=E&lank=pub-jwbvod25_17_VIDEO"
 }
 ```
 
@@ -171,9 +183,16 @@ Fetches video captions and metadata by video ID.
 
 ### Get Video Captions
 ```json
+// Using direct video ID
 {
   "tool": "get_jw_captions",
-  "video_id": "YOUR_VIDEO_ID"
+  "video_id": "pub-jwbvod25_17_VIDEO"
+}
+
+// Using JW.org URL (automatically extracts video ID)
+{
+  "tool": "get_jw_captions", 
+  "video_id": "https://www.jw.org/finder?srcid=jwlshare&wtlocale=E&lank=pub-jwbvod25_17_VIDEO"
 }
 ```
 
