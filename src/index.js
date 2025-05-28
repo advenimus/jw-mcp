@@ -5,7 +5,8 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
-import fetch from 'node-fetch';
+import { captionsTool, handleCaptionsTool } from './tools/captions-tool.js';
+import { workbookTools, handleWorkbookTools } from './tools/workbook-tools.js';
 
 // Create server instance
 const server = new Server(
@@ -20,127 +21,36 @@ const server = new Server(
   }
 );
 
-// Tool to get JW video captions
+// Collect all tools from different modules
+const allTools = [
+  captionsTool,
+  ...workbookTools
+];
+
+// Collect all tool handlers
+const toolHandlers = [
+  handleCaptionsTool,
+  handleWorkbookTools
+];
+
+// Register tools
 server.setRequestHandler(ListToolsRequestSchema, async () => {
   return {
-    tools: [
-      {
-        name: 'get_jw_captions',
-        description: 'Fetches video captions from JW.org by video ID',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            video_id: {
-              type: 'string',
-              description: 'The JW.org video ID',
-            },
-          },
-          required: ['video_id'],
-        },
-      },
-    ],
+    tools: allTools,
   };
 });
 
-// Handle tool calls
+// Handle tool calls by delegating to appropriate handlers
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
-  if (request.params.name === 'get_jw_captions') {
-    const { video_id } = request.params.arguments;
-
-    try {
-      // Step 1: Get JSON data for JW video
-      const mediaUrl = `https://b.jw-cdn.org/apis/mediator/v1/media-items/E/${video_id}?clientType=www`;
-      const mediaResponse = await fetch(mediaUrl);
-      
-      if (!mediaResponse.ok) {
-        return {
-          content: [
-            {
-              type: 'text',
-              text: `Failed to fetch video data: ${mediaResponse.statusText}`,
-            },
-          ],
-        };
-      }
-
-      const mediaData = await mediaResponse.json();
-
-      // Check if media exists and has files
-      if (!mediaData.media || !mediaData.media[0] || !mediaData.media[0].files) {
-        return {
-          content: [
-            {
-              type: 'text',
-              text: 'No media found for this video ID',
-            },
-          ],
-        };
-      }
-
-      const media = mediaData.media[0];
-      
-      // Extract video metadata
-      const title = media.title || 'Unknown Title';
-      const thumbnail = media.images?.wss?.sm || '';
-
-      // Check for subtitles URL
-      const subtitlesUrl = media.files[1]?.subtitles?.url;
-
-      if (!subtitlesUrl) {
-        return {
-          content: [
-            {
-              type: 'text',
-              text: 'No subtitle file was found for this video. Unable to provide further info.',
-            },
-          ],
-          isError: true,
-        };
-      }
-
-      // Step 2: Get subtitles from JW.org
-      const subtitlesResponse = await fetch(subtitlesUrl);
-      
-      if (!subtitlesResponse.ok) {
-        return {
-          content: [
-            {
-              type: 'text',
-              text: `Failed to fetch subtitles: ${subtitlesResponse.statusText}`,
-            },
-          ],
-        };
-      }
-
-      const subtitlesData = await subtitlesResponse.text();
-
-      // Return the result matching the n8n workflow output
-      return {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify({
-              title,
-              thumbnail,
-              subtitles: subtitlesData,
-            }, null, 2),
-          },
-        ],
-      };
-
-    } catch (error) {
-      return {
-        content: [
-          {
-            type: 'text',
-            text: `Error: ${error.message}`,
-          },
-        ],
-        isError: true,
-      };
+  // Try each handler until one returns a result
+  for (const handler of toolHandlers) {
+    const result = await handler(request);
+    if (result !== null) {
+      return result;
     }
   }
 
+  // If no handler matched, return error
   return {
     content: [
       {
