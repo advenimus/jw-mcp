@@ -1,4 +1,5 @@
 # JW MCP Server
+[![smithery badge](https://smithery.ai/badge/@advenimus/jw-mcp)](https://smithery.ai/server/@advenimus/jw-mcp)
 
 An MCP (Model Context Protocol) server that provides tools for working with JW.org content, including video caption retrieval and more.
 
@@ -14,6 +15,14 @@ The caption fetching functionality replicates an n8n workflow that:
 - Returns video title, thumbnail URL, and subtitle content
 
 ## Installation
+
+### Installing via Smithery
+
+To install jw-mcp for Claude Desktop automatically via [Smithery](https://smithery.ai/server/@advenimus/jw-mcp):
+
+```bash
+npx -y @smithery/cli install @advenimus/jw-mcp --client claude
+```
 
 ### Local Development
 1. Clone this repository
