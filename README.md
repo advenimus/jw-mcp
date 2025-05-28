@@ -1,56 +1,42 @@
 # JW MCP Server
 
-An MCP (Model Context Protocol) server that provides tools for working with JW.org content, including video caption retrieval and more.
+An MCP (Model Context Protocol) server that provides tools for working with JW.org content, including workbook materials, Watchtower articles, and video captions.
 
 ## Features
 
-This MCP server currently includes:
-- **Video Caption Fetching**: Retrieves video metadata and subtitle content from JW.org by video ID
-- More tools coming soon!
+This MCP server provides three main categories of tools:
 
-The caption fetching functionality replicates an n8n workflow that:
-- Fetches video metadata from JW.org API
-- Retrieves subtitle files for videos
-- Returns video title, thumbnail URL, and subtitle content
+### 📚 **Christian Life and Ministry Workbook Tools**
+- **`getWorkbookLinks`**: Get available workbook weeks for current or specific issue
+- **`getWorkbookContent`**: Download RTF content for specific workbook weeks
 
-## Installation
+![Workbook Tools Demo](assets/images/get-clm-workbook-info.png)
 
-### Local Development
+### 📰 **Watchtower Study Tools** 
+- **`getWatchtowerLinks`**: Get available Watchtower articles for current or specific issue
+- **`getWatchtowerContent`**: Download RTF content for specific Watchtower articles
+
+![Watchtower Tools Demo](assets/images/get-wt-info.png)
+
+### 🎥 **Video Caption Tools**
+- **`get_jw_captions`**: Retrieves video metadata and subtitle content from JW.org by video ID
+
+### ⚡ **Smart Date Handling**
+All tools automatically handle current dates:
+- **Workbook tools**: Use current month (May 2025)
+- **Watchtower tools**: Use issue from 2 months ago (March 2025) since Watchtower studies are published 2 months ahead
+
+## Quick Start
+
+### Installation
 1. Clone this repository
 2. Install dependencies:
    ```bash
    npm install
    ```
 
-### Global Installation (Optional)
-If you want to install globally:
-```bash
-npm install -g .
-```
-
-Then you can use this simpler Claude Desktop configuration:
-```json
-{
-  "mcpServers": {
-    "jw-mcp": {
-      "command": "jw-mcp"
-    }
-  }
-}
-```
-
-## Usage
-
-### Running the Server
-
-Start the MCP server:
-```bash
-npm start
-```
-
-### Using with Claude Desktop
-
-1. Add the server to your Claude Desktop configuration file (`~/Library/Application Support/Claude/claude_desktop_config.json`):
+### Claude Desktop Setup
+Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_desktop_config.json`):
 
 ```json
 {
@@ -63,91 +49,189 @@ npm start
 }
 ```
 
-**Important:** Replace `/Users/<username>/jw-mcp` with the actual absolute path to your project directory.
+**Replace `/Users/<username>/jw-mcp` with your actual project path.**
 
-**Alternative configuration using shell script (more reliable):**
+## Available Tools
+
+### 📚 Workbook Tools
+
+#### `getWorkbookLinks`
+Get available workbook weeks for downloading.
+
+**Input:**
+- `issue` (optional): Specific issue in YYYYMM00 format (defaults to current issue)
+- `langwritten` (optional): Language code (defaults to 'E' for English)
+
+**Example:**
 ```json
 {
-  "mcpServers": {
-    "jw-mcp": {
-      "command": "/Users/<username>/jw-mcp/start-server.sh"
-    }
-  }
+  "issue": "20250500",
+  "langwritten": "E"
 }
 ```
 
-2. Restart Claude Desktop
-
-3. The server exposes these tools:
-   - `get_jw_captions`: Fetches video captions and metadata by video ID
-
-### Tool: get_jw_captions
+#### `getWorkbookContent` 
+Download RTF content for specific workbook weeks.
 
 **Input:**
-- `video_id` (string, required): The JW.org video ID
+- `weeks` (required): Array of week numbers to download (1-6)
+- `issue` (optional): Specific issue (defaults to current)
+- `langwritten` (optional): Language code (defaults to 'E')
+
+**Example:**
+```json
+{
+  "weeks": [1, 2, 3],
+  "issue": "20250500"
+}
+```
+
+### 📰 Watchtower Tools
+
+#### `getWatchtowerLinks`
+Get available Watchtower articles for downloading.
+
+**Input:**
+- `issue` (optional): Specific issue in YYYYMM00 format (defaults to current Watchtower issue)
+- `langwritten` (optional): Language code (defaults to 'E' for English)
+
+**Example:**
+```json
+{
+  "issue": "20250300",
+  "langwritten": "E"
+}
+```
+
+#### `getWatchtowerContent`
+Download RTF content for specific Watchtower articles.
+
+**Input:**
+- `articles` (required): Array of article numbers to download (1-4 typically)
+- `issue` (optional): Specific issue (defaults to current Watchtower issue)
+- `langwritten` (optional): Language code (defaults to 'E')
+
+**Example:**
+```json
+{
+  "articles": [1, 2],
+  "issue": "20250300"
+}
+```
+
+### 🎥 Video Caption Tools
+
+#### `get_jw_captions`
+Fetches video captions and metadata by video ID.
+
+**Input:**
+- `video_id` (required): The JW.org video ID
 
 **Output:**
-Returns a JSON object containing:
 - `title`: Video title
-- `thumbnail`: Thumbnail image URL
+- `thumbnail`: Thumbnail image URL  
 - `subtitles`: Complete subtitle content (VTT format)
 
 **Example:**
-```
-Tool: get_jw_captions
-Arguments: {
+```json
+{
   "video_id": "YOUR_VIDEO_ID_HERE"
 }
 ```
 
+## Examples
+
+### Get Current Workbook Weeks
+```json
+// Get all available weeks for current issue (May-June 2025)
+{
+  "tool": "getWorkbookLinks"
+}
+
+// Download weeks 1-3 content
+{
+  "tool": "getWorkbookContent",
+  "weeks": [1, 2, 3]
+}
+```
+
+### Get Current Watchtower Articles  
+```json
+// Get all available articles for current studies (March 2025 issue with May 2025 studies)
+{
+  "tool": "getWatchtowerLinks"
+}
+
+// Download articles 1-2 content
+{
+  "tool": "getWatchtowerContent", 
+  "articles": [1, 2]
+}
+```
+
+### Get Video Captions
+```json
+{
+  "tool": "get_jw_captions",
+  "video_id": "YOUR_VIDEO_ID"
+}
+```
+
+## How Date Handling Works
+
+### Automatic Current Issue Detection
+- **Workbook**: Always uses current month (e.g., May 2025 = `20250500`)
+- **Watchtower**: Uses issue from 2 months ago (e.g., May 2025 = `20250300`)
+
+### Why 2 Months Behind for Watchtower?
+Watchtower studies are published 2 months ahead of their study period:
+- **March 2025 issue** contains **May 2025 studies**
+- **January 2025 issue** contains **March 2025 studies**
+
+The server automatically calculates this offset, even handling year boundaries correctly (January 2025 → November 2024).
+
+## Technical Details
+
+### Architecture
+- **Modular design**: Each tool category in separate files under `src/tools/`
+- **Shared utilities**: Common functions in `rtf-utils.js` for API calls and date calculations
+- **Auto-registration**: Server automatically loads and registers all tools
+
 ### Error Handling
+- Invalid issue formats
+- Network connectivity issues  
+- Missing content or files
+- API rate limiting
 
-The server handles several error cases:
-- Invalid video ID: Returns error message if video not found
-- Missing subtitles: Returns "No subtitle file was found for this video"
-- Network errors: Returns appropriate error messages
-
-## How It Works
-
-### Video Caption Fetching
-
-1. The server receives a video ID
-2. Makes a request to `https://b.jw-cdn.org/apis/mediator/v1/media-items/E/{video_id}?clientType=www`
-3. Extracts the subtitle URL from the response
-4. Fetches the subtitle content
-5. Returns the combined data (title, thumbnail, subtitles)
-
-## Development
-
-The server is built using:
-- Node.js with ES modules
-- MCP SDK (@modelcontextprotocol/sdk)
-- node-fetch for HTTP requests
+### Supported Languages
+All tools support multiple languages via the `langwritten` parameter:
+- `E` - English (default)
+- `S` - Spanish  
+- `F` - French
+- And many others...
 
 ## Troubleshooting
 
 ### Common Issues
 
-1. **"Could not read package.json" error**: This usually means the working directory is not set correctly. Use the shell script approach instead of the npm command.
+1. **"Could not read package.json" error**: Use absolute path in Claude Desktop config
+2. **Server disconnects**: Ensure Node.js is installed and dependencies are available (`npm install`)
+3. **Permission denied**: Make shell script executable (`chmod +x start-server.sh`)
 
-2. **Server disconnects immediately**: Check that:
-   - The path to your project directory is correct and absolute
-   - Node.js is installed and accessible
-   - All dependencies are installed (`npm install`)
-
-3. **Permission denied**: Make sure the shell script is executable:
-   ```bash
-   chmod +x start-server.sh
-   ```
-
-### Testing the Server
-
-You can test the server manually by running:
+### Testing
+Test the server manually:
 ```bash
+npm start
+# or
 ./start-server.sh
 ```
 
-The server should start and display "JW MCP Server running on stdio" in the error output.
+## Development
+
+Built with:
+- Node.js with ES modules
+- MCP SDK (@modelcontextprotocol/sdk)  
+- node-fetch for HTTP requests
 
 ## License
 
