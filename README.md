@@ -21,6 +21,8 @@ This MCP server provides three main categories of tools:
 ### 🎥 **Video Caption Tools**
 - **`get_jw_captions`**: Retrieves video metadata and subtitle content from JW.org by video ID
 
+![Video Captions Demo](assets/images/get-video-captions.png)
+
 ### ⚡ **Smart Date Handling**
 All tools automatically handle current dates:
 - **Workbook tools**: Use current month (May 2025)
