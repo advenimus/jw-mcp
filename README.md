@@ -29,17 +29,19 @@ All tools automatically handle current dates:
 - **Workbook tools**: Use current month (May 2025)
 - **Watchtower tools**: Use issue from 2 months ago (March 2025) since Watchtower studies are published 2 months ahead
 
-## Quick Start
+# Quick Start
 
-### Installation
+## Installation
 
-### Installing via Smithery
+### Installing via Smithery (Recommended)
 
 To install jw-mcp for Claude Desktop automatically via [Smithery](https://smithery.ai/server/@advenimus/jw-mcp):
 
-```bash
-npx --yes @smithery/cli install-protocol @advenimus/jw-mcp --client claude
-```
+On this page, click the relevant install option for your client
+![Smithery Install](assets/images/smithery-intall.png)
+
+
+## Manual Local Install
 
 1. Clone this repository
 2. Install dependencies:
@@ -48,7 +50,7 @@ npx --yes @smithery/cli install-protocol @advenimus/jw-mcp --client claude
    ```
 
 ### Claude Desktop Setup
-Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_desktop_config.json`):
+If cloned manually to a folder on your system, update your Claude Desktop config (`~/Library/Application Support/Claude/claude_desktop_config.json`):
 
 ```json
 {
