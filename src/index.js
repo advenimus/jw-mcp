@@ -7,6 +7,7 @@ import {
 } from '@modelcontextprotocol/sdk/types.js';
 import { captionsTool, handleCaptionsTool } from './tools/captions-tool.js';
 import { workbookTools, handleWorkbookTools } from './tools/workbook-tools.js';
+import { watchtowerTools, handleWatchtowerTools } from './tools/watchtower-tools.js';
 
 // Create server instance
 const server = new Server(
@@ -24,13 +25,15 @@ const server = new Server(
 // Collect all tools from different modules
 const allTools = [
   captionsTool,
-  ...workbookTools
+  ...workbookTools,
+  ...watchtowerTools
 ];
 
 // Collect all tool handlers
 const toolHandlers = [
   handleCaptionsTool,
-  handleWorkbookTools
+  handleWorkbookTools,
+  handleWatchtowerTools
 ];
 
 // Register tools

@@ -1,14 +1,29 @@
-import { fetchPublicationData, downloadRtfContent, getCurrentIssue } from './rtf-utils.js';
+import fetch from 'node-fetch';
 
 /**
  * Get available workbook links for a specific issue
  */
-export async function getWorkbookLinks(pub = 'mwb', langwritten = 'E', issue = null, fileformat = 'RTF') {
+export async function getWorkbookLinks(pub = 'mwb', langwritten = 'E', issue = '20250500', fileformat = 'RTF') {
   try {
-    const { files, pubName, formattedDate, language } = await fetchPublicationData(pub, langwritten, issue, fileformat);
+    const apiUrl = `https://b.jw-cdn.org/apis/pub-media/GETPUBMEDIALINKS?pub=${pub}&langwritten=${langwritten}&issue=${issue}&fileformat=${fileformat}&output=json`;
     
+    const response = await fetch(apiUrl);
+    
+    if (!response.ok) {
+      throw new Error(`API request failed: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    
+    // Extract RTF files, excluding the ZIP file (which is always first)
+    const rtfFiles = data.files?.[langwritten]?.[fileformat];
+    
+    if (!rtfFiles || rtfFiles.length === 0) {
+      throw new Error('No RTF files found');
+    }
+
     // Skip the first item (ZIP file) and return the individual week files
-    const weekFiles = files.slice(1).map((file, index) => ({
+    const weekFiles = rtfFiles.slice(1).map((file, index) => ({
       title: file.title,
       url: file.file.url,
       filesize: file.filesize,
@@ -18,11 +33,11 @@ export async function getWorkbookLinks(pub = 'mwb', langwritten = 'E', issue = n
     }));
 
     return {
-      pubName,
-      formattedDate,
-      issue: issue || getCurrentIssue(),
-      language,
-      weekFiles
+      pubName: data.pubName,
+      formattedDate: data.formattedDate,
+      issue: data.issue,
+      language: data.languages[langwritten].name,
+      weekFiles: weekFiles
     };
 
   } catch (error) {
@@ -34,14 +49,32 @@ export async function getWorkbookLinks(pub = 'mwb', langwritten = 'E', issue = n
  * Fetch RTF content from a given URL
  */
 export async function getWorkbookContent(url) {
-  return await downloadRtfContent(url);
+  try {
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch RTF content: ${response.statusText}`);
+    }
+
+    const rtfContent = await response.text();
+    
+    return {
+      url: url,
+      content: rtfContent,
+      contentType: response.headers.get('content-type'),
+      size: rtfContent.length
+    };
+
+  } catch (error) {
+    throw new Error(`Failed to fetch workbook content: ${error.message}`);
+  }
 }
 
 // Tool definitions for the MCP server
 export const workbookTools = [
   {
     name: 'getWorkbookLinks',
-    description: 'STEP 1: Get JW.org "Our Christian Life and Ministry" (CLM) meeting workbook weeks. When a user asks for CLM workbook content, use this tool FIRST to show them available weeks. Returns weekly titles like "May 5-11 (Proverbs 12)" with their RTF download URLs. Automatically uses current month/year for the issue.',
+    description: 'STEP 1: Get JW.org "Our Christian Life and Ministry" (CLM) meeting workbook weeks. When a user asks for CLM workbook content, use this tool FIRST to show them available weeks. Returns weekly titles like "May 5-11 (Proverbs 12)" with their RTF download URLs. Use default parameters for current English workbooks.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -57,7 +90,8 @@ export const workbookTools = [
         },
         issue: {
           type: 'string',
-          description: 'Issue in YYYYMM00 format. Leave empty to use current month/year automatically (e.g., "20250500" for May 2025)'
+          description: 'Issue in YYYYMM00 format. Current: "20250500" for May-June 2025',
+          default: '20250500'
         },
         fileformat: {
           type: 'string',
