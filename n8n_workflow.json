@@ -1,0 +1,1031 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "path": "8c3054f2-b7d4-44c4-8d2f-62668252e5cb"
+      },
+      "type": "@n8n/n8n-nodes-langchain.mcpTrigger",
+      "typeVersion": 1,
+      "position": [
+        -460,
+        -40
+      ],
+      "id": "6ffd6502-cd4d-4990-9265-302c28c91435",
+      "name": "MCP Server Trigger",
+      "webhookId": "8c3054f2-b7d4-44c4-8d2f-62668252e5cb"
+    },
+    {
+      "parameters": {
+        "description": "Used to get video captions for videos from JW.org\n\nFor JW videos, must pass in a video ID such as pub-mwbv_202505_1_VIDEO or a JW.org URL\n\nExample:\n{\n  \"toolName\": \"get_jw_captions\",\n  \"toolData\": {\n    \"video_id\": \"pub-mwbv_202505_1_VIDEO\"\n  }\n}",
+        "workflowId": {
+          "__rl": true,
+          "value": "JtQWAvUXS9jLSWn8",
+          "mode": "id"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "toolName": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('toolName', ``, 'string') }}",
+            "toolData": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('toolData', ``, 'string') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "toolName",
+              "displayName": "toolName",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "toolData",
+              "displayName": "toolData",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "object"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        -200,
+        220
+      ],
+      "id": "bd25222b-4f38-4b9f-b7fd-9a52233be2e0",
+      "name": "Video Captions"
+    },
+    {
+      "parameters": {
+        "description": "STEP 1: Get JW.org \"Our Christian Life and Ministry\" (CLM) meeting workbook weeks\n\nExample:\n{\n  \"toolName\": \"getWorkbookLinks\",\n  \"toolData\": {\n    \"pub\": \"mwb\",\n    \"langwritten\": \"E\",\n    \"issue\": null,\n    \"fileformat\": \"RTF\"\n  }\n}",
+        "workflowId": {
+          "__rl": true,
+          "value": "JtQWAvUXS9jLSWn8",
+          "mode": "id"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "toolName": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('toolName', ``, 'string') }}",
+            "toolData": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('toolData', ``, 'string') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "toolName",
+              "displayName": "toolName",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "toolData",
+              "displayName": "toolData",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "object"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        -200,
+        380
+      ],
+      "id": "tool-workbook-links",
+      "name": "Get Workbook Links"
+    },
+    {
+      "parameters": {
+        "description": "STEP 2: Get the actual CLM workbook content after user chooses a week\n\nExample:\n{\n  \"toolName\": \"getWorkbookContent\",\n  \"toolData\": {\n    \"url\": \"https://cfp2.jw-cdn.org/a/...\"\n  }\n}",
+        "workflowId": {
+          "__rl": true,
+          "value": "JtQWAvUXS9jLSWn8",
+          "mode": "id"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "toolName": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('toolName', ``, 'string') }}",
+            "toolData": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('toolData', ``, 'string') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "toolName",
+              "displayName": "toolName",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "toolData",
+              "displayName": "toolData",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "object"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        -200,
+        540
+      ],
+      "id": "tool-workbook-content",
+      "name": "Get Workbook Content"
+    },
+    {
+      "parameters": {
+        "description": "STEP 1: Get JW.org Watchtower study articles. Automatically gets correct issue for current study articles (2 months behind)\n\nExample:\n{\n  \"toolName\": \"getWatchtowerLinks\",\n  \"toolData\": {\n    \"pub\": \"w\",\n    \"langwritten\": \"E\",\n    \"issue\": null,\n    \"fileformat\": \"RTF\"\n  }\n}",
+        "workflowId": {
+          "__rl": true,
+          "value": "JtQWAvUXS9jLSWn8",
+          "mode": "id"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "toolName": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('toolName', ``, 'string') }}",
+            "toolData": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('toolData', ``, 'string') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "toolName",
+              "displayName": "toolName",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "toolData",
+              "displayName": "toolData",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "object"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        40,
+        220
+      ],
+      "id": "tool-watchtower-links",
+      "name": "Get Watchtower Links"
+    },
+    {
+      "parameters": {
+        "description": "STEP 2: Get the actual Watchtower article content after user chooses an article\n\nExample:\n{\n  \"toolName\": \"getWatchtowerContent\",\n  \"toolData\": {\n    \"url\": \"https://cfp2.jw-cdn.org/a/...\"\n  }\n}",
+        "workflowId": {
+          "__rl": true,
+          "value": "JtQWAvUXS9jLSWn8",
+          "mode": "id"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "toolName": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('toolName', ``, 'string') }}",
+            "toolData": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('toolData', ``, 'string') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "toolName",
+              "displayName": "toolName",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "toolData",
+              "displayName": "toolData",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "object"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        40,
+        380
+      ],
+      "id": "tool-watchtower-content",
+      "name": "Get Watchtower Content"
+    },
+    {
+      "parameters": {
+        "inputSource": "jsonExample",
+        "jsonExample": "{ \n  \"toolName\": \"get_jw_captions\",\n  \"toolData\": {\n    \"video_id\": \"pub-mwbv_202505_1_VIDEO\"\n  }\n}"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -1140,
+        700
+      ],
+      "id": "c99fb408-01ea-440c-8e3b-b25978d1ac0e",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.toolName }}",
+                    "rightValue": "get_jw_captions",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "c91c71e6-e34c-4bc4-88f2-11edad525eb5"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "JW Captions"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.toolName }}",
+                    "rightValue": "getWorkbookLinks",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "workbook-links-condition"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Workbook Links"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.toolName }}",
+                    "rightValue": "getWorkbookContent",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "workbook-content-condition"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Workbook Content"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.toolName }}",
+                    "rightValue": "getWatchtowerLinks",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "watchtower-links-condition"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Watchtower Links"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.toolName }}",
+                    "rightValue": "getWatchtowerContent",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "watchtower-content-condition"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Watchtower Content"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -920,
+        700
+      ],
+      "id": "77c3b6b7-de38-46aa-8596-94f317e6d570",
+      "name": "Switch (Tool)"
+    },
+    {
+      "parameters": {
+        "url": "=https://b.jw-cdn.org/apis/mediator/v1/media-items/E/{{ $json.toolData.video_id.includes('http') ? ($json.toolData.video_id.includes('lank=') ? $json.toolData.video_id.split('lank=')[1].split('&')[0] : ($json.toolData.video_id.includes('docid=') ? $json.toolData.video_id.split('docid=')[1].split('&')[0] : $json.toolData.video_id.match(/pub-[^/]+/)?.[0] || $json.toolData.video_id)) : $json.toolData.video_id }}?clientType=www",
+        "options": {}
+      },
+      "id": "cb5b8ded-4129-42b1-9132-b0bd6542ca98",
+      "name": "Get JSON Data for JW",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -640,
+        700
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.media[0].files[1].subtitles.url }}",
+        "options": {}
+      },
+      "id": "28a0ff4e-81fc-4528-ab62-da314f9b5226",
+      "name": "Get Subtitles from JW.org",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -80,
+        840
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "6a7f39de-379b-413b-926f-dd1954b48f7c",
+              "name": "thumbnail",
+              "value": "={{ $('Get JSON Data for JW').item.json.media[0].images.wss.sm }}",
+              "type": "string"
+            },
+            {
+              "id": "8e8ff4a3-87eb-4995-bf3b-163ac8ac08ca",
+              "name": "title",
+              "value": "={{ $('Get JSON Data for JW').item.json.media[0].title }}",
+              "type": "string"
+            },
+            {
+              "id": "8d9d9ed1-c828-4ca0-a343-6f9558f76a92",
+              "name": "subtitles",
+              "value": "={{ $json.data }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "bf599670-e0d4-4d5f-b8c0-c3ca804b34c6",
+      "name": "Set JW",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        140,
+        840
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "6a7f39de-379b-413b-926f-dd1954b48f7c",
+              "name": "thumbnail",
+              "value": "=",
+              "type": "string"
+            },
+            {
+              "id": "8e8ff4a3-87eb-4995-bf3b-163ac8ac08ca",
+              "name": "title",
+              "value": "=NOT FOUND",
+              "type": "string"
+            },
+            {
+              "id": "8d9d9ed1-c828-4ca0-a343-6f9558f76a92",
+              "name": "subtitles",
+              "value": "=NOT FOUND",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "d10dd7cb-df96-4a50-af43-872031bb58c9",
+      "name": "Set JW (Not Found)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -100,
+        660
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.media[0].files[1].subtitles.url }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "string",
+                      "operation": "empty",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "No Subtitles URL"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "f8ea64d1-d905-4535-b927-0e646979ccde",
+                    "leftValue": "={{ $json.media[0].files[1].subtitles.url }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "string",
+                      "operation": "notEmpty",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Found Subtitles URL"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a155f88b-3a1a-4a5d-9270-c5f3d81fcef6",
+      "name": "Switch (Captions Tool)",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -420,
+        700
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get current issue in YYYYMM00 format\nfunction getCurrentIssue() {\n  const now = new Date();\n  const year = now.getFullYear();\n  const month = String(now.getMonth() + 1).padStart(2, '0');\n  return `${year}${month}00`;\n}\n\nconst toolData = $input.item.json.toolData;\nconst pub = toolData.pub || 'mwb';\nconst langwritten = toolData.langwritten || 'E';\nconst fileformat = toolData.fileformat || 'RTF';\nconst issue = toolData.issue || getCurrentIssue();\n\nreturn {\n  url: `https://b.jw-cdn.org/apis/pub-media/GETPUBMEDIALINKS?pub=${pub}&langwritten=${langwritten}&issue=${issue}&fileformat=${fileformat}&output=json`\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -640,
+        1000
+      ],
+      "id": "build-workbook-url",
+      "name": "Build Workbook URL"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "options": {}
+      },
+      "id": "get-workbook-links-http",
+      "name": "Get Workbook Data",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -420,
+        1000
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "name": "pubName",
+              "value": "={{ $json.pubName }}",
+              "type": "string"
+            },
+            {
+              "name": "formattedDate",
+              "value": "={{ $json.formattedDate }}",
+              "type": "string"
+            },
+            {
+              "name": "issue",
+              "value": "={{ $json.issue }}",
+              "type": "string"
+            },
+            {
+              "name": "language",
+              "value": "={{ $json.languages[$('When Executed by Another Workflow').item.json.toolData.langwritten || 'E'].name }}",
+              "type": "string"
+            },
+            {
+              "name": "weekFiles",
+              "value": "={{ $json.files[$('When Executed by Another Workflow').item.json.toolData.langwritten || 'E']['RTF'].slice(1).map((file, index) => ({ title: file.title, url: file.file.url, filesize: file.filesize, track: file.track, modifiedDatetime: file.file.modifiedDatetime, checksum: file.file.checksum })) }}",
+              "type": "json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "format-workbook-links",
+      "name": "Format Workbook Links",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -200,
+        1000
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.toolData.url }}",
+        "options": {}
+      },
+      "id": "get-workbook-rtf",
+      "name": "Get Workbook RTF",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -640,
+        1200
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "name": "url",
+              "value": "={{ $('When Executed by Another Workflow').item.json.toolData.url }}",
+              "type": "string"
+            },
+            {
+              "name": "content",
+              "value": "={{ $json.data }}",
+              "type": "string"
+            },
+            {
+              "name": "contentType",
+              "value": "={{ $json.headers['content-type'] }}",
+              "type": "string"
+            },
+            {
+              "name": "size",
+              "value": "={{ $json.data.length }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "format-workbook-content",
+      "name": "Format Workbook Content",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -420,
+        1200
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get current Watchtower issue (2 months behind)\nfunction getCurrentWatchtowerIssue() {\n  const now = new Date();\n  const targetDate = new Date(now.getFullYear(), now.getMonth() - 2, 1);\n  const year = targetDate.getFullYear();\n  const month = String(targetDate.getMonth() + 1).padStart(2, '0');\n  return `${year}${month}00`;\n}\n\nconst toolData = $input.item.json.toolData;\nconst pub = toolData.pub || 'w';\nconst langwritten = toolData.langwritten || 'E';\nconst fileformat = toolData.fileformat || 'RTF';\nconst issue = toolData.issue || getCurrentWatchtowerIssue();\n\nreturn {\n  url: `https://b.jw-cdn.org/apis/pub-media/GETPUBMEDIALINKS?pub=${pub}&langwritten=${langwritten}&issue=${issue}&fileformat=${fileformat}&output=json`\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -640,
+        1400
+      ],
+      "id": "build-watchtower-url",
+      "name": "Build Watchtower URL"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "options": {}
+      },
+      "id": "get-watchtower-links-http",
+      "name": "Get Watchtower Data",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -420,
+        1400
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "name": "pubName",
+              "value": "={{ $json.pubName }}",
+              "type": "string"
+            },
+            {
+              "name": "formattedDate",
+              "value": "={{ $json.formattedDate }}",
+              "type": "string"
+            },
+            {
+              "name": "issue",
+              "value": "={{ $json.issue }}",
+              "type": "string"
+            },
+            {
+              "name": "language",
+              "value": "={{ $json.languages[$('When Executed by Another Workflow').item.json.toolData.langwritten || 'E'].name }}",
+              "type": "string"
+            },
+            {
+              "name": "articles",
+              "value": "={{ $json.files[$('When Executed by Another Workflow').item.json.toolData.langwritten || 'E']['RTF'].slice(1).map((file, index) => ({ title: file.title, url: file.file.url, filesize: file.filesize, track: file.track, modifiedDatetime: file.file.modifiedDatetime, checksum: file.file.checksum })) }}",
+              "type": "json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "format-watchtower-links",
+      "name": "Format Watchtower Links",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -200,
+        1400
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.toolData.url }}",
+        "options": {}
+      },
+      "id": "get-watchtower-rtf",
+      "name": "Get Watchtower RTF",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -640,
+        1600
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "name": "url",
+              "value": "={{ $('When Executed by Another Workflow').item.json.toolData.url }}",
+              "type": "string"
+            },
+            {
+              "name": "content",
+              "value": "={{ $json.data }}",
+              "type": "string"
+            },
+            {
+              "name": "contentType",
+              "value": "={{ $json.headers['content-type'] }}",
+              "type": "string"
+            },
+            {
+              "name": "size",
+              "value": "={{ $json.data.length }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "format-watchtower-content",
+      "name": "Format Watchtower Content",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -420,
+        1600
+      ]
+    }
+  ],
+  "connections": {
+    "Video Captions": {
+      "ai_tool": [
+        [
+          {
+            "node": "MCP Server Trigger",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Workbook Links": {
+      "ai_tool": [
+        [
+          {
+            "node": "MCP Server Trigger",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Workbook Content": {
+      "ai_tool": [
+        [
+          {
+            "node": "MCP Server Trigger",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Watchtower Links": {
+      "ai_tool": [
+        [
+          {
+            "node": "MCP Server Trigger",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Watchtower Content": {
+      "ai_tool": [
+        [
+          {
+            "node": "MCP Server Trigger",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Switch (Tool)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch (Tool)": {
+      "main": [
+        [
+          {
+            "node": "Get JSON Data for JW",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Workbook URL",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get Workbook RTF",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Watchtower URL",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get Watchtower RTF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get JSON Data for JW": {
+      "main": [
+        [
+          {
+            "node": "Switch (Captions Tool)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Subtitles from JW.org": {
+      "main": [
+        [
+          {
+            "node": "Set JW",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch (Captions Tool)": {
+      "main": [
+        [
+          {
+            "node": "Set JW (Not Found)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get Subtitles from JW.org",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Workbook URL": {
+      "main": [
+        [
+          {
+            "node": "Get Workbook Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Workbook Data": {
+      "main": [
+        [
+          {
+            "node": "Format Workbook Links",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Workbook RTF": {
+      "main": [
+        [
+          {
+            "node": "Format Workbook Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Watchtower URL": {
+      "main": [
+        [
+          {
+            "node": "Get Watchtower Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Watchtower Data": {
+      "main": [
+        [
+          {
+            "node": "Format Watchtower Links",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Watchtower RTF": {
+      "main": [
+        [
+          {
+            "node": "Format Watchtower Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "dc294d87d63db94196681e0c32af91e1009d220b8a6ea94891b94cb4e59fd053"
+  }
+}
