@@ -19,7 +19,9 @@ import {
 
 const app = express();
 app.use(cors({
-  exposedHeaders: ['Mcp-Session-Id', 'Content-Type']
+  origin: '*',
+  exposedHeaders: ['mcp-session-id', 'Mcp-Session-Id', 'Content-Type'],
+  allowedHeaders: ['Content-Type', 'mcp-session-id', 'Mcp-Session-Id']
 }));
 // NOTE: Do NOT use express.json() middleware here!
 // StreamableHTTPServerTransport needs access to the raw request stream.
@@ -89,48 +91,33 @@ function createServer() {
   return server;
 }
 
-// Store server+transport pairs by sessionId
-const sessions = new Map();
+// STATELESS MODE: Create fresh Server + Transport instances for EVERY request
+// This ensures compatibility with Smithery's distributed architecture where
+// requests may be routed to different container instances without sticky sessions.
 
-// Streamable HTTP POST endpoint - handles all MCP messages
 app.post('/mcp', async (req, res) => {
+  // Create fresh instances for this request only
+  const server = createServer();
+  const transport = new StreamableHTTPServerTransport({
+    sessionIdGenerator: undefined  // Critical: undefined for stateless mode
+  });
+
   try {
-    // Get sessionId from header (Smithery's gateway sends this)
-    const sessionId = req.headers['mcp-session-id'];
+    // Connect server to transport
+    await server.connect(transport);
 
-    let session;
+    // Set up cleanup when response finishes
+    res.on('close', () => {
+      try {
+        transport.close?.();
+        server.close?.();
+      } catch (cleanupError) {
+        console.error('Error during cleanup:', cleanupError);
+      }
+    });
 
-    if (sessionId && sessions.has(sessionId)) {
-      // Reuse existing session
-      session = sessions.get(sessionId);
-    } else {
-      // Create new server and transport for this session
-      const server = createServer();
-      const transport = new StreamableHTTPServerTransport({
-        endpoint: '/mcp',
-        sessionIdGenerator: () => sessionId || `session-${Date.now()}-${Math.random().toString(36).substring(7)}`
-      });
-
-      // Connect server to transport
-      await server.connect(transport);
-
-      session = { server, transport };
-
-      // Store session
-      const finalSessionId = sessionId || transport.sessionId;
-      sessions.set(finalSessionId, session);
-
-      // Set up cleanup when transport closes
-      transport.onclose = () => {
-        sessions.delete(finalSessionId);
-        console.error(`Session ${finalSessionId} closed`);
-      };
-
-      console.error(`New session created: ${finalSessionId}`);
-    }
-
-    // Handle the request using the transport
-    await session.transport.handleRequest(req, res);
+    // Handle the request
+    await transport.handleRequest(req, res);
   } catch (error) {
     console.error('Error handling POST request:', error);
     console.error('Error stack:', error.stack);
@@ -140,29 +127,14 @@ app.post('/mcp', async (req, res) => {
   }
 });
 
-// Optional GET endpoint for SSE streaming responses (if needed)
-app.get('/mcp', async (req, res) => {
-  try {
-    const sessionId = req.headers['mcp-session-id'];
-
-    if (!sessionId) {
-      return res.status(400).json({ error: 'Missing Mcp-Session-Id header' });
-    }
-
-    const session = sessions.get(sessionId);
-
-    if (!session) {
-      return res.status(404).json({ error: `No active session found for sessionId: ${sessionId}` });
-    }
-
-    // Handle GET request (for SSE streaming)
-    await session.transport.handleRequest(req, res);
-  } catch (error) {
-    console.error('Error handling GET request:', error);
-    if (!res.headersSent) {
-      res.status(500).json({ error: 'Internal server error', details: error.message });
-    }
-  }
+// GET endpoint - SSE streaming not supported in stateless mode
+// Stateless servers cannot maintain persistent connections for streaming
+app.get('/mcp', (req, res) => {
+  res.status(501).json({
+    error: 'Not Implemented',
+    message: 'SSE streaming (GET requests) is not supported in stateless mode. Use POST for all MCP requests.',
+    mode: 'stateless-per-request'
+  });
 });
 
 // Health check endpoint
@@ -170,16 +142,18 @@ app.get('/health', (req, res) => {
   res.json({
     status: 'healthy',
     transport: 'streamable-http',
-    activeSessions: sessions.size
+    mode: 'stateless-per-request',
+    description: 'Each request creates fresh Server and Transport instances for Smithery compatibility'
   });
 });
 
 // Start the server
 const PORT = process.env.PORT || 8081;
 app.listen(PORT, () => {
-  console.error(`JW MCP Server running on Streamable HTTP transport`);
+  console.error(`JW MCP Server running in STATELESS mode`);
+  console.error(`Transport: Streamable HTTP (per-request instances)`);
   console.error(`Port: ${PORT}`);
   console.error(`POST endpoint: http://localhost:${PORT}/mcp`);
-  console.error(`GET endpoint (SSE): http://localhost:${PORT}/mcp`);
   console.error(`Health check: http://localhost:${PORT}/health`);
+  console.error(`Note: SSE streaming (GET) not supported in stateless mode`);
 });
