@@ -2,7 +2,7 @@
 import express from 'express';
 import cors from 'cors';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
-import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
+import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
@@ -18,7 +18,9 @@ import {
 } from './tools/scripture-tools.js';
 
 const app = express();
-app.use(cors());
+app.use(cors({
+  exposedHeaders: ['Mcp-Session-Id', 'Content-Type']
+}));
 app.use(express.json());
 
 // Create server instance
@@ -81,62 +83,84 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   };
 });
 
-// Store transports by sessionId for multiple concurrent connections
-const transports = {};
+// Store transports by sessionId for session-aware connections
+const transports = new Map();
 
-// SSE endpoint - establishes connection and returns sessionId
-app.get('/mcp', async (req, res) => {
+// Streamable HTTP POST endpoint - handles all MCP messages
+app.post('/mcp', async (req, res) => {
   try {
-    // Create a new SSE transport for this connection
-    // The endpoint '/mcp' is where clients will POST messages
-    const transport = new SSEServerTransport('/mcp', res);
+    // Get sessionId from header (Smithery's gateway sends this)
+    const sessionId = req.headers['mcp-session-id'];
 
-    // Store the transport by its sessionId for later message routing
-    transports[transport.sessionId] = transport;
+    let transport;
+    let isNewSession = false;
 
-    // Clean up when connection closes
-    res.on('close', () => {
-      delete transports[transport.sessionId];
-      console.error(`Session ${transport.sessionId} disconnected`);
-    });
+    if (sessionId && transports.has(sessionId)) {
+      // Reuse existing transport for this session
+      transport = transports.get(sessionId);
+    } else {
+      // Create new transport for new session or stateless request
+      transport = new StreamableHTTPServerTransport({
+        endpoint: '/mcp',
+        sessionIdGenerator: () => {
+          // Use session ID from header if provided, otherwise generate new one
+          return sessionId || `session-${Date.now()}-${Math.random().toString(36).substring(7)}`;
+        }
+      });
 
-    // Connect the server to this transport (this calls transport.start() internally)
-    await server.connect(transport);
+      isNewSession = true;
 
-    console.error(`New SSE connection established: ${transport.sessionId}`);
+      // Connect server to transport only for new transports
+      await server.connect(transport);
+
+      // Store transport if we have a session ID
+      if (sessionId || transport.sessionId) {
+        const finalSessionId = sessionId || transport.sessionId;
+        transports.set(finalSessionId, transport);
+
+        // Set up cleanup when transport closes
+        transport.onclose = () => {
+          transports.delete(finalSessionId);
+          console.error(`Session ${finalSessionId} closed`);
+        };
+      }
+
+      if (isNewSession) {
+        console.error(`New session created: ${sessionId || transport.sessionId}`);
+      }
+    }
+
+    // Handle the request using the transport
+    await transport.handleRequest(req, res);
   } catch (error) {
-    console.error('Error establishing SSE connection:', error);
+    console.error('Error handling POST request:', error);
     if (!res.headersSent) {
-      res.status(500).json({ error: 'Failed to establish SSE connection' });
+      res.status(500).json({ error: 'Internal server error', details: error.message });
     }
   }
 });
 
-// POST endpoint - handles JSON-RPC messages from clients
-app.post('/mcp', async (req, res) => {
+// Optional GET endpoint for SSE streaming responses (if needed)
+app.get('/mcp', async (req, res) => {
   try {
-    // Get sessionId from query parameter (sent by client)
-    const sessionId = req.query.sessionId;
+    const sessionId = req.headers['mcp-session-id'];
 
     if (!sessionId) {
-      res.status(400).json({ error: 'Missing sessionId parameter' });
-      return;
+      return res.status(400).json({ error: 'Missing Mcp-Session-Id header' });
     }
 
-    // Find the transport for this session
-    const transport = transports[sessionId];
+    const transport = transports.get(sessionId);
 
     if (!transport) {
-      res.status(404).json({ error: `No active session found for sessionId: ${sessionId}` });
-      return;
+      return res.status(404).json({ error: `No active session found for sessionId: ${sessionId}` });
     }
 
-    // Handle the POST message using the transport's built-in handler
-    await transport.handlePostMessage(req, res);
+    // Handle GET request (for SSE streaming)
+    await transport.handleRequest(req, res);
   } catch (error) {
-    console.error('Error handling POST request:', error);
+    console.error('Error handling GET request:', error);
     if (!res.headersSent) {
-      res.status(500).json({ error: 'Internal server error' });
+      res.status(500).json({ error: 'Internal server error', details: error.message });
     }
   }
 });
@@ -145,15 +169,17 @@ app.post('/mcp', async (req, res) => {
 app.get('/health', (req, res) => {
   res.json({
     status: 'healthy',
-    activeSessions: Object.keys(transports).length
+    transport: 'streamable-http',
+    activeSessions: transports.size
   });
 });
 
 // Start the server
 const PORT = process.env.PORT || 8081;
 app.listen(PORT, () => {
-  console.error(`JW MCP Server running on HTTP port ${PORT}`);
-  console.error(`SSE endpoint: GET http://localhost:${PORT}/mcp`);
-  console.error(`Message endpoint: POST http://localhost:${PORT}/mcp?sessionId=<id>`);
-  console.error(`Health check: GET http://localhost:${PORT}/health`);
+  console.error(`JW MCP Server running on Streamable HTTP transport`);
+  console.error(`Port: ${PORT}`);
+  console.error(`POST endpoint: http://localhost:${PORT}/mcp`);
+  console.error(`GET endpoint (SSE): http://localhost:${PORT}/mcp`);
+  console.error(`Health check: http://localhost:${PORT}/health`);
 });
