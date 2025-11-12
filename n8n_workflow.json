@@ -1,4 +1,5 @@
 {
+  "name": "MCP Server - JW MCP Tools",
   "nodes": [
     {
       "parameters": {
@@ -7,19 +8,19 @@
       "type": "@n8n/n8n-nodes-langchain.mcpTrigger",
       "typeVersion": 1,
       "position": [
-        -460,
-        -40
+        -320,
+        -576
       ],
-      "id": "6ffd6502-cd4d-4990-9265-302c28c91435",
+      "id": "63a263b2-6a49-4e34-9b77-c9bcf5115815",
       "name": "MCP Server Trigger",
       "webhookId": "8c3054f2-b7d4-44c4-8d2f-62668252e5cb"
     },
     {
       "parameters": {
-        "description": "Used to get video captions for videos from JW.org\n\nFor JW videos, must pass in a video ID such as pub-mwbv_202505_1_VIDEO or a JW.org URL\n\nExample:\n{\n  \"toolName\": \"get_jw_captions\",\n  \"toolData\": {\n    \"video_id\": \"pub-mwbv_202505_1_VIDEO\"\n  }\n}",
+        "description": "Used to get video captions for videos from JW.org\n\nFor JW videos, must pass in a video ID such as pub-mwbv_202505_1_VIDEO or a JW.org URL like https://www.jw.org/finder?srcid=jwlshare&wtlocale=E&lank=pub-lffv_431_VIDEO then pass in ID pub-lffv_431_VIDEO \n\nExample:\n{ \n  \"toolName\": \"get_jw_captions\",\n  \"toolData\": {\n    \"video_id\": \"pub-mwbv_202505_1_VIDEO\"\n  }\n}",
         "workflowId": {
           "__rl": true,
-          "value": "JtQWAvUXS9jLSWn8",
+          "value": "8y0SXa4FULuB2w7s",
           "mode": "id"
         },
         "workflowInputs": {
@@ -56,18 +57,18 @@
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 2.2,
       "position": [
-        -200,
-        220
+        -64,
+        -288
       ],
-      "id": "bd25222b-4f38-4b9f-b7fd-9a52233be2e0",
+      "id": "81003063-1e84-431e-b815-183ee000b967",
       "name": "Video Captions"
     },
     {
       "parameters": {
-        "description": "STEP 1: Get JW.org \"Our Christian Life and Ministry\" (CLM) meeting workbook weeks\n\nExample:\n{\n  \"toolName\": \"getWorkbookLinks\",\n  \"toolData\": {\n    \"pub\": \"mwb\",\n    \"langwritten\": \"E\",\n    \"issue\": null,\n    \"fileformat\": \"RTF\"\n  }\n}",
+        "description": "STEP 1: Get JW.org \"Our Christian Life and Ministry\" (CLM) meeting workbook weeks. You must determine what month range to pass in. the CLM workbook is only released by monthly, so for example, for workbooks in August 2025, the July 2025 workbook issue is where to find that workbook. Pass in issue as 202507. \n\nYOU MUST ALWAYS PASS IN AN ISSUE. Never pass in NULL. If you try this, then step 2 and nothing is returned, circle back to here and ask user to confirm issue number.\n\nExample:\n{\n  \"toolName\": \"getWorkbookLinks\",\n  \"toolData\": {\n    \"pub\": \"mwb\",\n    \"langwritten\": \"E\",\n    \"issue\": \"202507\",\n    \"fileformat\": \"RTF\"\n  }\n}",
         "workflowId": {
           "__rl": true,
-          "value": "JtQWAvUXS9jLSWn8",
+          "value": "8y0SXa4FULuB2w7s",
           "mode": "id"
         },
         "workflowInputs": {
@@ -104,18 +105,18 @@
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 2.2,
       "position": [
-        -200,
-        380
+        -496,
+        -288
       ],
-      "id": "tool-workbook-links",
+      "id": "8c1202e9-6b27-488e-a4eb-57aa804914ba",
       "name": "Get Workbook Links"
     },
     {
       "parameters": {
-        "description": "STEP 2: Get the actual CLM workbook content after user chooses a week\n\nExample:\n{\n  \"toolName\": \"getWorkbookContent\",\n  \"toolData\": {\n    \"url\": \"https://cfp2.jw-cdn.org/a/...\"\n  }\n}",
+        "description": "STEP 2: Get the actual CLM workbook content after user chooses a week\n\nExample:\n{\n  \"toolName\": \"getWorkbookContent\",\n  \"toolData\": {\n    \"url\": \"https://cfp2.jw-cdn.org/a/...\"\n  }\n}\n\nThis should return a proper text format of the workbook. If malformed or invalid, report to user and stop.",
         "workflowId": {
           "__rl": true,
-          "value": "JtQWAvUXS9jLSWn8",
+          "value": "8y0SXa4FULuB2w7s",
           "mode": "id"
         },
         "workflowInputs": {
@@ -152,18 +153,18 @@
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 2.2,
       "position": [
-        -200,
-        540
+        -512,
+        -112
       ],
-      "id": "tool-workbook-content",
+      "id": "07f9bbcd-e0d3-400f-b022-6891a67350e9",
       "name": "Get Workbook Content"
     },
     {
       "parameters": {
-        "description": "STEP 1: Get JW.org Watchtower study articles. Automatically gets correct issue for current study articles (2 months behind)\n\nExample:\n{\n  \"toolName\": \"getWatchtowerLinks\",\n  \"toolData\": {\n    \"pub\": \"w\",\n    \"langwritten\": \"E\",\n    \"issue\": null,\n    \"fileformat\": \"RTF\"\n  }\n}",
+        "description": "STEP 1: Get JW.org Watchtower study articles. Automatically gets correct issue for current study articles (2 months behind). If required, input a manual month under \"monthToCheck\" or leave undefined to try default. Manual define would be if you could not find the article requested for one month, so try a month earlier (ie. default was 20250600 but article wasn't found, so you can try monthToCheck as 05 and this would check 20250500 ). When an article cannot be found, never try a month later, always try the previous 2 months one at a time. \n\nExample:\n{\n  \"toolName\": \"getWatchtowerLinks\",\n  \"toolData\": {\n    \"pub\": \"w\",\n    \"langwritten\": \"E\",\n    \"issue\": null,\n    \"fileformat\": \"RTF\",\n    \"monthToCheck\": \"05\"\n\n  }\n}",
         "workflowId": {
           "__rl": true,
-          "value": "JtQWAvUXS9jLSWn8",
+          "value": "8y0SXa4FULuB2w7s",
           "mode": "id"
         },
         "workflowInputs": {
@@ -200,10 +201,10 @@
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 2.2,
       "position": [
-        40,
-        220
+        128,
+        -288
       ],
-      "id": "tool-watchtower-links",
+      "id": "55aa592e-6a35-47d3-a7fe-ba9357c33366",
       "name": "Get Watchtower Links"
     },
     {
@@ -211,7 +212,7 @@
         "description": "STEP 2: Get the actual Watchtower article content after user chooses an article\n\nExample:\n{\n  \"toolName\": \"getWatchtowerContent\",\n  \"toolData\": {\n    \"url\": \"https://cfp2.jw-cdn.org/a/...\"\n  }\n}",
         "workflowId": {
           "__rl": true,
-          "value": "JtQWAvUXS9jLSWn8",
+          "value": "8y0SXa4FULuB2w7s",
           "mode": "id"
         },
         "workflowInputs": {
@@ -248,10 +249,10 @@
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 2.2,
       "position": [
-        40,
-        380
+        128,
+        -112
       ],
-      "id": "tool-watchtower-content",
+      "id": "836ad02e-c966-40e3-83f6-4654e95c4068",
       "name": "Get Watchtower Content"
     },
     {
@@ -262,10 +263,10 @@
       "type": "n8n-nodes-base.executeWorkflowTrigger",
       "typeVersion": 1.1,
       "position": [
-        -1140,
-        700
+        576,
+        -512
       ],
-      "id": "c99fb408-01ea-440c-8e3b-b25978d1ac0e",
+      "id": "8abb054a-a95d-4952-aed9-7d5a1cdcec12",
       "name": "When Executed by Another Workflow"
     },
     {
@@ -391,6 +392,102 @@
               },
               "renameOutput": true,
               "outputKey": "Watchtower Content"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.toolName }}",
+                    "rightValue": "get_verse_range",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "verse-range-condition"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Verse Range"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.toolName }}",
+                    "rightValue": "get_verse_with_notes",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "verse-notes-condition"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Verse with Notes"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.toolName }}",
+                    "rightValue": "get_verse_with_content",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "verse-content-condition"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Verse with Content"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.toolName }}",
+                    "rightValue": "get_verse_complete",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "verse-complete-condition"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Verse Complete"
             }
           ]
         },
@@ -399,10 +496,10 @@
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.2,
       "position": [
-        -920,
-        700
+        800,
+        -560
       ],
-      "id": "77c3b6b7-de38-46aa-8596-94f317e6d570",
+      "id": "2d760982-7385-403a-926e-941b5d1aa390",
       "name": "Switch (Tool)"
     },
     {
@@ -410,13 +507,13 @@
         "url": "=https://b.jw-cdn.org/apis/mediator/v1/media-items/E/{{ $json.toolData.video_id.includes('http') ? ($json.toolData.video_id.includes('lank=') ? $json.toolData.video_id.split('lank=')[1].split('&')[0] : ($json.toolData.video_id.includes('docid=') ? $json.toolData.video_id.split('docid=')[1].split('&')[0] : $json.toolData.video_id.match(/pub-[^/]+/)?.[0] || $json.toolData.video_id)) : $json.toolData.video_id }}?clientType=www",
         "options": {}
       },
-      "id": "cb5b8ded-4129-42b1-9132-b0bd6542ca98",
+      "id": "1b997fe4-7d4f-4c6b-b2e3-d21e4b4d0006",
       "name": "Get JSON Data for JW",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        -640,
-        700
+        1088,
+        -544
       ]
     },
     {
@@ -424,13 +521,13 @@
         "url": "={{ $json.media[0].files[1].subtitles.url }}",
         "options": {}
       },
-      "id": "28a0ff4e-81fc-4528-ab62-da314f9b5226",
+      "id": "9e8e2d58-6621-45af-8419-228b8d7fc01f",
       "name": "Get Subtitles from JW.org",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        -80,
-        840
+        1664,
+        -416
       ]
     },
     {
@@ -459,13 +556,13 @@
         },
         "options": {}
       },
-      "id": "bf599670-e0d4-4d5f-b8c0-c3ca804b34c6",
+      "id": "28bae7ce-89e1-4169-ae04-202096955535",
       "name": "Set JW",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        140,
-        840
+        1888,
+        -416
       ]
     },
     {
@@ -494,13 +591,13 @@
         },
         "options": {}
       },
-      "id": "d10dd7cb-df96-4a50-af43-872031bb58c9",
+      "id": "1178371e-dff9-4f6d-a92b-02e62eef4b1b",
       "name": "Set JW (Not Found)",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        -100,
-        660
+        1616,
+        -624
       ]
     },
     {
@@ -560,13 +657,13 @@
         },
         "options": {}
       },
-      "id": "a155f88b-3a1a-4a5d-9270-c5f3d81fcef6",
+      "id": "c8252fd3-e4b3-4481-be0d-ac4ccefd9104",
       "name": "Switch (Captions Tool)",
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.2,
       "position": [
-        -420,
-        700
+        1328,
+        -560
       ]
     },
     {
@@ -576,10 +673,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -640,
-        1000
+        1104,
+        -256
       ],
-      "id": "build-workbook-url",
+      "id": "132e423c-1bb6-4710-931a-65a6022acfa2",
       "name": "Build Workbook URL"
     },
     {
@@ -587,13 +684,13 @@
         "url": "={{ $json.url }}",
         "options": {}
       },
-      "id": "get-workbook-links-http",
+      "id": "331b4d56-ac21-4b9c-8f2f-7b80c8cfb896",
       "name": "Get Workbook Data",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        -420,
-        1000
+        1328,
+        -256
       ]
     },
     {
@@ -629,13 +726,13 @@
         },
         "options": {}
       },
-      "id": "format-workbook-links",
+      "id": "3c1d4c3c-a432-4144-8e77-8116b444ecec",
       "name": "Format Workbook Links",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        -200,
-        1000
+        1536,
+        -256
       ]
     },
     {
@@ -643,63 +740,26 @@
         "url": "={{ $json.toolData.url }}",
         "options": {}
       },
-      "id": "get-workbook-rtf",
+      "id": "82d100ab-99e1-4fe1-a611-d5ca2ab5bde3",
       "name": "Get Workbook RTF",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        -640,
-        1200
+        1104,
+        -64
       ]
     },
     {
       "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "name": "url",
-              "value": "={{ $('When Executed by Another Workflow').item.json.toolData.url }}",
-              "type": "string"
-            },
-            {
-              "name": "content",
-              "value": "={{ $json.data }}",
-              "type": "string"
-            },
-            {
-              "name": "contentType",
-              "value": "={{ $json.headers['content-type'] }}",
-              "type": "string"
-            },
-            {
-              "name": "size",
-              "value": "={{ $json.data.length }}",
-              "type": "number"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "id": "format-workbook-content",
-      "name": "Format Workbook Content",
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [
-        -420,
-        1200
-      ]
-    },
-    {
-      "parameters": {
-        "jsCode": "// Get current Watchtower issue (2 months behind)\nfunction getCurrentWatchtowerIssue() {\n  const now = new Date();\n  const targetDate = new Date(now.getFullYear(), now.getMonth() - 2, 1);\n  const year = targetDate.getFullYear();\n  const month = String(targetDate.getMonth() + 1).padStart(2, '0');\n  return `${year}${month}00`;\n}\n\nconst toolData = $input.item.json.toolData;\nconst pub = toolData.pub || 'w';\nconst langwritten = toolData.langwritten || 'E';\nconst fileformat = toolData.fileformat || 'RTF';\nconst issue = toolData.issue || getCurrentWatchtowerIssue();\n\nreturn {\n  url: `https://b.jw-cdn.org/apis/pub-media/GETPUBMEDIALINKS?pub=${pub}&langwritten=${langwritten}&issue=${issue}&fileformat=${fileformat}&output=json`\n};"
+        "jsCode": "// Get current Watchtower issue (2 months behind by default, or specific month if provided)\nfunction getCurrentWatchtowerIssue() {\n  const now = new Date();\n  const targetDate = new Date(now.getFullYear(), now.getMonth() - 2, 1);\n  const year = targetDate.getFullYear();\n  const month = String(targetDate.getMonth() + 1).padStart(2, '0');\n  return `${year}${month}00`;\n}\n\nfunction getSpecificMonthIssue(monthToCheck) {\n  const now = new Date();\n  const year = now.getFullYear();\n  const month = String(monthToCheck).padStart(2, '0');\n  return `${year}${month}00`;\n}\n\nconst toolData = $input.item.json.toolData;\nconst pub = toolData.pub || 'w';\nconst langwritten = toolData.langwritten || 'E';\nconst fileformat = toolData.fileformat || 'RTF';\n\n// If monthToCheck is specified and not empty, use that specific month, otherwise default to 2 months back\nlet issue;\nif (toolData.issue) {\n  issue = toolData.issue;\n} else if (toolData.monthToCheck !== undefined && toolData.monthToCheck !== \"\") {\n  issue = getSpecificMonthIssue(toolData.monthToCheck);\n} else {\n  issue = getCurrentWatchtowerIssue();\n}\n\nreturn {\n  url: `https://b.jw-cdn.org/apis/pub-media/GETPUBMEDIALINKS?pub=${pub}&langwritten=${langwritten}&issue=${issue}&fileformat=${fileformat}&output=json`\n};"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -640,
-        1400
+        1104,
+        144
       ],
-      "id": "build-watchtower-url",
+      "id": "bcf5b075-8066-4c44-bea8-b537b589ba95",
       "name": "Build Watchtower URL"
     },
     {
@@ -707,13 +767,13 @@
         "url": "={{ $json.url }}",
         "options": {}
       },
-      "id": "get-watchtower-links-http",
+      "id": "16f8d0e3-3ffd-470f-9e9d-0f4af6846794",
       "name": "Get Watchtower Data",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        -420,
-        1400
+        1328,
+        144
       ]
     },
     {
@@ -749,27 +809,152 @@
         },
         "options": {}
       },
-      "id": "format-watchtower-links",
+      "id": "509ea9f7-cabd-48c4-9565-1f7f067b2e10",
       "name": "Format Watchtower Links",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        -200,
-        1400
+        1536,
+        144
       ]
     },
     {
       "parameters": {
         "url": "={{ $json.toolData.url }}",
-        "options": {}
+        "options": {
+          "response": {
+            "response": {}
+          }
+        }
       },
-      "id": "get-watchtower-rtf",
+      "id": "11885936-9b4f-4d0a-9306-043f2eba58a1",
       "name": "Get Watchtower RTF",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        -640,
-        1600
+        1104,
+        336
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build WOL API URL based on tool name and toolData parameters\nconst toolName = $input.item.json.toolName;\nconst toolData = $input.item.json.toolData;\n\nconst baseUrl = 'http://wol-api_backend_1:8000/api/v1';\nconst book = toolData.book;\nconst chapter = toolData.chapter;\nconst verse = toolData.verse; // Can be single verse \"14\" or range \"14-16\"\n\nlet url = '';\nlet queryParams = [];\n\n// All tools now use the unified study endpoint structure\nurl = `${baseUrl}/study/${book}/${chapter}/${verse}`;\n\n// Handle field selection based on tool name and toolData.fields\nif (toolName === 'get_verse_range') {\n  // Legacy support - verse range with default fields\n  queryParams.push('fields=combined_text,verses,chapter_level');\n\n} else if (toolName === 'get_verse_with_notes') {\n  // Focus on verse-specific content only\n  queryParams.push('fields=verses');\n\n} else if (toolName === 'get_verse_with_content') {\n  // Verse content plus chapter-level context\n  queryParams.push('fields=verses,chapter_level');\n\n  if (toolData.limit) {\n    queryParams.push(`limit=${toolData.limit}`);\n  }\n\n} else if (toolName === 'get_verse_complete') {\n  // Handle custom fields if provided, otherwise use comprehensive defaults\n  if (toolData.fields && Array.isArray(toolData.fields) && toolData.fields.length > 0) {\n    // Use custom fields specified in toolData\n    queryParams.push(`fields=${toolData.fields.join(',')}`);\n  } else {\n    // Default comprehensive fields\n    queryParams.push('fields=verses,chapter_level,combined_text');\n  }\n\n  if (toolData.limit) {\n    queryParams.push(`limit=${toolData.limit}`);\n  }\n}\n\n// Add query parameters if any\nif (queryParams.length > 0) {\n  url += '?' + queryParams.join('&');\n}\n\nreturn {\n  url: url,\n  tool_name: toolName,\n  verse_type: verse.includes('-') ? 'range' : 'single'\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1136,
+        704
+      ],
+      "id": "3e7ec893-d85d-4860-8f9f-84985742edfb",
+      "name": "Build WOL API URL"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 45000
+        }
+      },
+      "id": "fe6dbacc-c9c9-43db-b866-d87c3e8d6f93",
+      "name": "Call WOL API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1360,
+        704
+      ],
+      "retryOnFail": true,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "rBXxMpxu9en4VOLK",
+          "name": "wol-api-1"
+        },
+        "httpHeaderAuth": {
+          "id": "6JP8T1aawaucoGBB",
+          "name": "WOL-API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "study_articles",
+        "include": "allOtherFields",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        2000,
+        576
+      ],
+      "id": "6b4b2fbd-32a7-403d-a5d7-72dedcb115fe",
+      "name": "Split Out1"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.study_articles.url }}",
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2208,
+        576
+      ],
+      "id": "2ea3c656-d6de-4594-95d3-0b76488b71e4",
+      "name": "Get Article Info1"
+    },
+    {
+      "parameters": {
+        "operation": "extractHtmlContent",
+        "extractionValues": {
+          "values": [
+            {
+              "cssSelector": ".scalableui",
+              "returnArray": true
+            }
+          ]
+        },
+        "options": {
+          "cleanUpText": true
+        }
+      },
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        2416,
+        576
+      ],
+      "id": "3479456e-e747-4535-92ab-7fd4a38fe607",
+      "name": "HTML1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "8a945ed9-0eab-4c85-b0d4-bb0a9e9da55e",
+              "name": "study_articles",
+              "value": "={{ $json.verses[0].study_articles }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "8ab8d8d0-4736-44e6-9341-a167dc3dde28",
+      "name": "Set Array1",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1792,
+        576
       ]
     },
     {
@@ -777,39 +962,271 @@
         "assignments": {
           "assignments": [
             {
-              "name": "url",
-              "value": "={{ $('When Executed by Another Workflow').item.json.toolData.url }}",
-              "type": "string"
-            },
-            {
-              "name": "content",
+              "id": "8a945ed9-0eab-4c85-b0d4-bb0a9e9da55e",
+              "name": "all_study_article_material",
               "value": "={{ $json.data }}",
+              "type": "array"
+            },
+            {
+              "id": "6acf90bf-e16d-4d74-9242-0cb2540d1044",
+              "name": "verses",
+              "value": "={{ $('Call WOL API').item.json.verses }}",
+              "type": "array"
+            },
+            {
+              "id": "c6398539-2d2f-4eb9-b968-8fac0fa8577e",
+              "name": "book_num",
+              "value": "={{ $('Call WOL API').item.json.book_num }}",
+              "type": "number"
+            },
+            {
+              "id": "53fad9b0-e323-4357-9bc1-19599943d8ef",
+              "name": "book_name",
+              "value": "={{ $('Call WOL API').item.json.book_name }}",
               "type": "string"
             },
             {
-              "name": "contentType",
-              "value": "={{ $json.headers['content-type'] }}",
-              "type": "string"
-            },
-            {
-              "name": "size",
-              "value": "={{ $json.data.length }}",
+              "id": "1fd7856f-f246-4e0e-aa37-9d3ec7def026",
+              "name": "chapter",
+              "value": "={{ $('Call WOL API').item.json.chapter }}",
               "type": "number"
             }
           ]
         },
         "options": {}
       },
-      "id": "format-watchtower-content",
-      "name": "Format Watchtower Content",
+      "id": "e058ab44-0cb9-4ec6-8a5b-13496ed0c163",
+      "name": "Format WOL Response1",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        -420,
-        1600
+        3056,
+        576
       ]
+    },
+    {
+      "parameters": {
+        "description": "=DESCRIPTION:\nRetrieves Bible verses and study content from the Watchtower Online Library (wol.jw.org). Provides\nverse text, study notes, cross-references, chapter outlines, and related study articles from\nJehovah's Witnesses publications. Supports both single verses and verse ranges with unified response structure.\n\nTOOL FORMAT:\n[\n  {\n    \"toolName\": \"get_verse_with_notes\",\n    \"toolData\": {\n      \"book\": 40,\n      \"chapter\": 24,\n      \"verse\": \"14\",\n      \"fields\": [\"verses\", \"chapter_level\"]\n    }\n  }\n]\n\nPARAMETERS:\n- book (required): Bible book number (1-66)\n- chapter (required): Chapter number within the book\n- verse (required): Single verse number (e.g., \"14\") OR verse range (e.g., \"14-16\")\n- fields (optional): Array of content types to retrieve. If omitted, returns verses and chapter_level by default.\n\nRESPONSE STRUCTURE:\nAll responses include these metadata fields automatically:\n- book_num: Bible book number (40)\n- book_name: Book name (\"Matthew\")  \n- chapter: Chapter number (24)\n\nAVAILABLE FIELDS:\n- \"verses\" - Array of individual verses with their specific content:\n  * verse_num: Verse number\n  * verse_text: The Bible verse text (**NOTE**: If verse text comes back empty, just rerun the API again)\n  * study_notes: Verse-specific study notes (array) - only included when \"study_notes\" requested\n  * study_articles: Verse-specific research articles (array) - only included when \"study_articles\" requested\n  * cross_references: Verse-specific cross-references (array) - only included when \"cross_references\" requested\n\n- \"study_notes\" - Includes verse-specific study notes in the verses array\n- \"study_articles\" - Includes verse-specific research articles in the verses array  \n- \"cross_references\" - Includes verse-specific cross-references in the verses array\n- \"verse_range\" - Range identifier (e.g., \"14-16\" or \"14\")\n\nWHEN TO USE SINGLE VERSE vs VERSE RANGE:\n\nSINGLE VERSE (verse: \"14\"):\n- Use for: Specific scripture lookup, detailed verse study\n- Returns: One item in verses array with all verse-specific content\n- Example: \"What does Matthew 24:14 say about preaching?\"\n\nVERSE RANGE (verse: \"14-16\"):\n- Use for: Context study, passage analysis, sermon preparation\n- Returns: Multiple items in verses array, each with their specific content\n- Example: \"Study Matthew 24:14-16 about end times signs\"\n\nFIELD SELECTION GUIDE:\n\n🔥 RECOMMENDED DEFAULT (Most Common):\n[\"verses\", \"study_notes\"] - Gets verse text with verse-specific study notes\n\nFor Research:\n[\"verses\", \"study_notes\", \"study_articles\"] - Gets verse text with study notes and research articles\n\nTROUBLESHOOTING:\nIf study notes or articles are not returning when expected, add &fetch=true to force fresh data:\n- This clears the cache and scrapes fresh content from wol.jw.org\n- Takes longer (~10-15 seconds vs ~200ms) but ensures current data\n- Only use when users complain about missing study content\n\nBIBLE BOOK NUMBERS:\n- Gospels: Matthew=40, Mark=41, Luke=42, John=43\n- Pentateuch: Genesis=1, Exodus=2, Leviticus=3, Numbers=4, Deuteronomy=5\n- Wisdom: Psalms=19, Proverbs=20, Ecclesiastes=21\n- Paul's Letters: Romans=45, 1 Corinthians=46, 2 Corinthians=47, Galatians=48, Ephesians=49\n- Prophecy: Daniel=27, Ezekiel=26, Isaiah=23, Jeremiah=24, Revelation=66\n\nEXAMPLES:\n\nSingle verse study (MOST COMMON):\n{\n  \"toolName\": \"get_verse_complete\",\n  \"toolData\": {\n    \"book\": 43,\n    \"chapter\": 3,\n    \"verse\": \"16\",\n    \"fields\": [\"verses\", \"study_notes\"]\n  }\n}\n\nVerse range for context:\n{\n  \"toolName\": \"get_verse_complete\",\n  \"toolData\": {\n    \"book\": 40,\n    \"chapter\": 24,\n    \"verse\": \"14-16\",\n    \"fields\": [\"verses\", \"study_notes\"]\n  }\n}\n\nQuick verse lookup (using defaults):\n{\n  \"toolName\": \"get_verse_complete\",\n  \"toolData\": {\n    \"book\": 19,\n    \"chapter\": 23,\n    \"verse\": \"1\"\n  }\n}\n\nWith forced refresh (when study content missing):\n{\n  \"toolName\": \"get_verse_complete\",\n  \"toolData\": {\n    \"book\": 43,\n    \"chapter\": 3,\n    \"verse\": \"16\",\n    \"fields\": [\"verses\", \"study_notes\"],\n    \"fetch\": true\n  }\n}\n\nUSE FOR:\n- \"What does John 3:16 say?\" → Single verse with default fields\n- \"Study Matthew 24:14-16 about preaching\" → Verse range with verses + study_notes\n- \"Show me Psalm 23 verses 1-3 with commentary\" → Range with study notes and articles\n- \"Research Romans 8:28 thoroughly\" → Single verse with study_notes and study_articles\n- Scripture study, sermon preparation, biblical research, contextual analysis\n\nRESPONSE FORMAT EXAMPLE:\n{\n  \"book_num\": 40,\n  \"book_name\": \"Matthew\",\n  \"chapter\": 24,\n  \"verse_range\": \"14-16\",\n  \"verses\": [\n    {\n      \"verse_num\": 14,\n      \"verse_text\": \"And this good news...\",\n      \"study_notes\": [\"Commentary about worldwide preaching...\"],\n      \"study_articles\": [{\"title\": \"When Will the End Come?\", \"url\": \"...\"}],\n      \"cross_references\": [\"Mark 13:10\", \"Romans 10:18\"]\n    }\n  ],\n}\n}",
+        "workflowId": {
+          "__rl": true,
+          "value": "8y0SXa4FULuB2w7s",
+          "mode": "id"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "toolName": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('toolName', ``, 'string') }}",
+            "toolData": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('toolData', ``, 'string') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "toolName",
+              "displayName": "toolName",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "toolData",
+              "displayName": "toolData",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "object"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        -288,
+        -288
+      ],
+      "id": "2c41da9b-9752-4d06-8a86-86b5dc277d3c",
+      "name": "Get JW Verse Info"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "name": "status_code",
+              "value": "={{ $json.statusCode || 200 }}",
+              "type": "number",
+              "id": "9aae998b-58fd-442e-867a-fd52f9841611"
+            },
+            {
+              "id": "8a945ed9-0eab-4c85-b0d4-bb0a9e9da55e",
+              "name": "all_study_article_material",
+              "value": "={{ $json.HTML_Article }}",
+              "type": "array"
+            },
+            {
+              "id": "99a59372-805f-4ea2-b9de-5555355475e2",
+              "name": "verses",
+              "value": "={{ $('Call WOL API').item.json.verses }}",
+              "type": "string"
+            },
+            {
+              "id": "d35f64de-e972-4a97-b553-ecce792b1286",
+              "name": "chapter_outline",
+              "value": "={{ $json.item.chapter_level.outline }}",
+              "type": "string"
+            },
+            {
+              "id": "db877df5-0506-4d97-89c2-4e5758e82dc1",
+              "name": "cross_references",
+              "value": "={{ $json.item.chapter_level.cross_references }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "8b0f2433-7b47-4879-995b-d4337f543eca",
+      "name": "Format WOL Response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1808,
+        832
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "4701038d-30ee-4db1-a96a-39c533a998b3",
+              "leftValue": "={{ $json.verses[0]?.study_articles?.length ?? 0 }}",
+              "rightValue": 1,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1584,
+        704
+      ],
+      "id": "17b1c36c-caee-4872-94ae-878003cbf1fd",
+      "name": "Has Study Articles"
+    },
+    {
+      "parameters": {
+        "html": "={{ $json[''][0] }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.markdown",
+      "typeVersion": 1,
+      "position": [
+        2640,
+        576
+      ],
+      "id": "6cd6b641-0f6e-4cdf-99af-0ec0f5b5ec33",
+      "name": "Markdown"
+    },
+    {
+      "parameters": {
+        "fieldsToAggregate": {
+          "fieldToAggregate": [
+            {
+              "fieldToAggregate": "data"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        2848,
+        576
+      ],
+      "id": "55090afe-c700-4bf6-845c-843fc26651cb",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "python",
+        "pythonCode": "# RTF Text Extractor for n8n Code Node - FINAL VERSION\n# Mode: \"Run once for each item\"\n# Based on striprtf library - uses only built-in Python libraries\n# Handles Pyodide JsProxy objects in n8n\n\nimport re\nimport codecs\n\n# Adapted from striprtf library (https://github.com/joshy/striprtf)\n# All code uses only Python built-in libraries - no external dependencies\n\ndestinations = frozenset((\n    'aftncn','aftnsep','aftnsepc','annotation','atnauthor','atndate','atnicn','atnid',\n    'atnparent','atnref','atntime','atrfend','atrfstart','author','background',\n    'bkmkend','bkmkstart','blipuid','buptim','category','colorschememapping',\n    'colortbl','comment','company','creatim','datafield','datastore','defchp','defpap',\n    'do','doccomm','docvar','dptxbxtext','ebcend','ebcstart','factoidname','falt',\n    'fchars','ffdeftext','ffentrymcr','ffexitmcr','ffformat','ffhelptext','ffl',\n    'ffname','ffstattext','file','filetbl','fldinst','fldtype','fonttbl',\n    'fname','fontemb','fontfile','footer','footerf','footerl','footerr',\n    'footnote','formfield','ftncn','ftnsep','ftnsepc','g','generator','gridtbl',\n    'header','headerf','headerl','headerr','hl','hlfr','hlinkbase','hlloc','hlsrc',\n    'hsv','htmltag','info','keycode','keywords','latentstyles','lchars','levelnumbers',\n    'leveltext','lfolevel','linkval','list','listlevel','listname','listoverride',\n    'listoverridetable','listpicture','liststylename','listtable','listtext',\n    'lsdlockedexcept','macc','maccPr','mailmerge','maln','malnScr','manager','margPr',\n    'mbar','mbarPr','mbaseJc','mbegChr','mborderBox','mborderBoxPr','mbox','mboxPr',\n    'mchr','mcount','mctrlPr','md','mdeg','mdegHide','mden','mdiff','mdPr','me',\n    'mendChr','meqArr','meqArrPr','mf','mfName','mfPr','mfunc','mfuncPr','mgroupChr',\n    'mgroupChrPr','mgrow','mhideBot','mhideLeft','mhideRight','mhideTop','mhtmltag',\n    'mlim','mlimloc','mlimlow','mlimlowPr','mlimupp','mlimuppPr','mm','mmaddfieldname',\n    'mmath','mmathPict','mmathPr','mmaxdist','mmc','mmcJc','mmconnectstr',\n    'mmconnectstrdata','mmcPr','mmcs','mmdatasource','mmheadersource','mmmailsubject',\n    'mmodso','mmodsofilter','mmodsofldmpdata','mmodsomappedname','mmodsoname',\n    'mmodsorecipdata','mmodsosort','mmodsosrc','mmodsotable','mmodsoudl',\n    'mmodsoudldata','mmodsouniquetag','mmPr','mmquery','mmr','mnary','mnaryPr',\n    'mnoBreak','mnum','mobjDist','moMath','moMathPara','moMathParaPr','mopEmu',\n    'mphant','mphantPr','mplcHide','mpos','mr','mrad','mradPr','mrPr','msepChr',\n    'mshow','mshp','msPre','msPrePr','msSub','msSubPr','msSubSup','msSubSupPr','msSup',\n    'msSupPr','mstrikeBLTR','mstrikeH','mstrikeTLBR','mstrikeV','msub','msubHide',\n    'msup','msupHide','mtransp','mtype','mvertJc','mvfmf','mvfml','mvtof','mvtol',\n    'mzeroAsc','mzeroDesc','mzeroWid','nesttableprops','nextfile','nonesttables',\n    'objalias','objclass','objdata','object','objname','objsect','objtime','oldcprops',\n    'oldpprops','oldsprops','oldtprops','oleclsid','operator','panose','password',\n    'passwordhash','pgp','pgptbl','picprop','pict','pn','pnseclvl','pntext','pntxta',\n    'pntxtb','printim','private','propname','protend','protstart','protusertbl','pxe',\n    'result','revtbl','revtim','rsidtbl','rxe','shp','shpgrp','shpinst',\n    'shppict','shprslt','shptxt','sn','sp','staticval','stylesheet','subject','sv',\n    'svb','tc','template','themedata','title','txe','ud','upr','userprops',\n    'wgrffmtfilter','windowcaption','writereservation','writereservhash','xe','xform',\n    'xmlattrname','xmlattrvalue','xmlclose','xmlname','xmlnstbl','xmlopen',\n))\n\ncharset_map = {\n    0: \"cp1252\", 42: \"cp1252\", 77: \"mac_roman\", 128: \"cp932\", 129: \"cp949\",\n    134: \"cp936\", 136: \"cp950\", 161: \"cp1253\", 162: \"cp1254\", 177: \"cp1255\",\n    178: \"cp1256\", 186: \"cp1257\", 204: \"cp1251\", 222: \"cp874\", 238: \"cp1250\",\n    254: \"cp437\", 255: \"cp850\",\n}\n\nsectionchars = {\"par\": \"\\n\", \"sect\": \"\\n\\n\", \"page\": \"\\n\\n\"}\nspecialchars = {\n    \"line\": \"\\n\", \"tab\": \"\\t\", \"emdash\": \"—\", \"endash\": \"–\", \"emspace\": \" \",\n    \"enspace\": \" \", \"qmspace\": \" \", \"bullet\": \"•\", \"lquote\": \"'\", \"rquote\": \"'\",\n    \"ldblquote\": \"\"\", \"rdblquote\": \"\"\", \"row\": \"\\n\", \"cell\": \"|\", \"nestcell\": \"|\",\n    \"~\": \" \", \"\\n\": \"\\n\", \"\\r\": \"\\r\", \"{\": \"{\", \"}\": \"}\", \"\\\\\": \"\\\\\",\n    \"-\": \"­\", \"_\": \"‑\", **sectionchars,\n}\n\nPATTERN = re.compile(\n    r\"\\\\([a-z]{1,32})(-?\\d{1,10})?[ ]?|\\\\'([0-9a-f]{2})|\\\\([^a-z])|([{}])|[\\r\\n]+|(.)\",\n    re.IGNORECASE,\n)\n\nHYPERLINKS = re.compile(\n    r\"(\\{\\\\field\\{\\s*\\\\\\*\\\\fldinst\\{.*HYPERLINK\\s(\\\".*\\\")\\}{2}\\s*\\{.*?\\s+(.*?)\\}{2,3})\",\n    re.IGNORECASE,\n)\n\nFONTTABLE = re.compile(r\"\\\\f(\\d+).*?\\\\fcharset(\\d+).*?([^;]+);\")\n\ndef remove_pict_groups(rtf_text):\n    if \"\\\\pict\" not in rtf_text or \"\\\\bin\" not in rtf_text:\n        return rtf_text\n    result = []\n    i = 0\n    n = len(rtf_text)\n    in_pict = False\n\n    while i < n:\n        if not in_pict and rtf_text.startswith(\"\\\\pict\", i):\n            in_pict = True\n            i += len(\"\\\\pict\")\n            continue\n\n        if in_pict:\n            if rtf_text.startswith(\"\\\\bin\", i):\n                i += len(\"\\\\bin\")\n                length_str = \"\"\n                while i < n and rtf_text[i].isdigit():\n                    length_str += rtf_text[i]\n                    i += 1\n                if length_str:\n                    i += int(length_str)\n                continue\n            elif rtf_text[i] == \"}\":\n                in_pict = False\n                i += 1\n                continue\n\n        if not in_pict:\n            result.append(rtf_text[i])\n        i += 1\n\n    return \"\".join(result)\n\ndef rtf_to_text(text, encoding=\"cp1252\", errors=\"ignore\"):\n    text = remove_pict_groups(text)\n    text = re.sub(HYPERLINKS, \"\\\\1(\\\\2)\", text)\n    \n    stack = []\n    fonttbl = {}\n    default_font = None\n    current_font = None\n    ignorable = False\n    suppress_output = False\n    ucskip = 1\n    curskip = 0\n    out = \"\"\n\n    fonttbl_matches = FONTTABLE.findall(text)\n    for font_id, fcharset, font_name in fonttbl_matches:\n        fonttbl[font_id] = {\n            \"name\": font_name.strip(),\n            \"charset\": fcharset,\n            \"encoding\": charset_map.get(int(fcharset), encoding),\n        }\n        \n    for match in PATTERN.finditer(text):\n        word, arg, _hex, char, brace, tchar = match.groups()\n        \n            \n        if brace:\n            curskip = 0\n            if brace == \"{\":\n                stack.append((ucskip, ignorable, suppress_output))\n            elif brace == \"}\":\n                if stack:\n                    ucskip, ignorable, suppress_output = stack.pop()\n                else:\n                    ucskip = 0\n                    ignorable = True\n                    \n        elif char:\n            curskip = 0\n            if char in specialchars:\n                if char in sectionchars:\n                    current_font = default_font\n                if not ignorable:\n                    out += specialchars[char]\n            elif char == \"*\":\n                ignorable = True\n                \n        elif word:\n            curskip = 0\n            if word in destinations:\n                ignorable = True\n            elif word == \"ansicpg\":\n                encoding = f\"cp{arg}\"\n                try:\n                    codecs.lookup(encoding)\n                except LookupError:\n                    encoding = \"utf8\"\n                    \n            if ignorable or suppress_output:\n                pass\n            elif word in specialchars:\n                out += specialchars[word]\n            elif word == \"uc\":\n                ucskip = int(arg) if arg else 1\n            elif word == \"u\":\n                if arg is None:\n                    curskip = ucskip\n                else:\n                    try:\n                        c = int(arg)\n                        if c < 0:\n                            c += 0x10000\n                        # Only add valid printable Unicode characters\n                        if 32 <= c < 0x110000 or c in [9, 10, 13]:  # Printable chars + tab, newline, carriage return\n                            out += chr(c)\n                        curskip = ucskip\n                    except:\n                        curskip = ucskip\n            elif word == \"f\":\n                current_font = arg\n            elif word == \"deff\":\n                default_font = arg\n            elif word == \"fonttbl\":\n                suppress_output = True\n            elif word == \"colortbl\":\n                suppress_output = True\n\n        elif _hex:\n            if curskip > 0:\n                curskip -= 1\n            elif not ignorable:\n                # Process hex character immediately\n                try:\n                    # Get the current encoding\n                    current_encoding = encoding\n                    if current_font and current_font in fonttbl:\n                        current_encoding = fonttbl[current_font].get(\"encoding\", encoding)\n                    \n                    # Decode hex byte\n                    decoded_byte = bytes.fromhex(_hex)\n                    char = decoded_byte.decode(encoding=current_encoding, errors=errors)\n                    out += char\n                except:\n                    # If decoding fails, try with default encoding\n                    try:\n                        char = bytes.fromhex(_hex).decode(encoding=\"cp1252\", errors=\"ignore\")\n                        if char and ord(char) >= 32:  # Only add printable characters\n                            out += char\n                    except:\n                        pass\n                    \n        elif tchar:\n            if curskip > 0:\n                curskip -= 1\n            elif not ignorable and not suppress_output:\n                out += tchar\n\n    return out\n\ndef clean_and_format_text(text):\n    if not text:\n        return \"\"\n    \n    # Fix common Unicode issues - but preserve actual characters\n    text = re.sub(r'[\\x00-\\x08\\x0B\\x0C\\x0E-\\x1F\\x7F]', '', text)  # Remove control characters\n    text = re.sub(r'\\xa0', ' ', text)  # Convert non-breaking spaces to regular spaces\n    text = re.sub(r'\\s+', ' ', text)  # Normalize whitespace\n    \n    # Add proper line breaks before questions\n    text = re.sub(r'(\\d+-\\d+\\.)', r'\\n\\1', text)\n    text = re.sub(r'(\\d+\\.)', r'\\n\\1', text)\n    \n    # Add line breaks before numbered paragraphs\n    text = re.sub(r'(\\d+\\s+[A-Z])', r'\\n\\1', text)\n    \n    # Ensure numbered paragraphs start with proper line breaks  \n    text = re.sub(r'([.!?])\\s*(\\d+\\s+[A-Z])', r'\\1\\n\\n\\2', text)\n    \n    # Add line breaks before section headings\n    text = re.sub(r'([a-z]\\.?)([A-Z][a-z]+\\s+[A-Z][a-z]+(?:\\s+[A-Z][a-z]+)*)', r'\\1\\n\\n\\2', text)\n    \n    # Fix specific transitions\n    text = re.sub(r'(truth\\?)([A-Z])', r'\\1\\n\\n\\2', text)\n    text = re.sub(r'(Progress)([A-Z])', r'\\1\\n\\n\\2', text)\n    text = re.sub(r'(Jehovah)([A-Z])', r'\\1\\n\\n\\2', text)\n    \n    # Clean up study article formatting\n    text = re.sub(r'Study Article\\s*\\d+', 'STUDY ARTICLE 27', text)\n    text = re.sub(r'Song\\s+\\d+', 'SONG 79', text)\n    \n    # Fix scripture references\n    text = re.sub(r'1\\s+Corinthians', '1 COR.', text)\n    text = re.sub(r'Matthew', 'Matt.', text)\n    text = re.sub(r',footnote', ', ftn', text)\n    \n    # Add answer placeholders\n    text = re.sub(r'(\\d+-\\d+\\.[^?]*\\?)', r'\\1\\n\\nYour answers', text)\n    text = re.sub(r'((?<!Your\\s)\\d+\\.[^?]*\\?)', r'\\1\\n\\nYour answer', text)\n    \n    # Clean up section headers  \n    text = re.sub(r'HELP YOUR STUDENT TO ([A-Z][A-Z\\s]*)', r'HELP YOUR STUDENT TO \\1', text)\n    \n    # Split into lines and clean\n    lines = text.split('\\n')\n    cleaned_lines = []\n    \n    for line in lines:\n        line = line.strip()\n        if line:\n            line = re.sub(r'\\s+', ' ', line)\n            cleaned_lines.append(line)\n    \n    # Join with appropriate spacing\n    result = []\n    prev_line = \"\"\n    \n    for line in cleaned_lines:\n        if not line:\n            continue\n            \n        if (line.startswith('STUDY ARTICLE') or \n            line.startswith('SONG') or\n            line.startswith('HELP YOUR STUDENT') or\n            line.startswith('SHOW CONFIDENCE') or\n            line.upper().startswith('FOCUS')):\n            if prev_line:\n                result.append('')\n            result.append(line)\n            result.append('')\n        elif re.match(r'^\\d+\\s+', line):\n            if prev_line:\n                result.append('')\n            result.append(line)\n        else:\n            result.append(line)\n            \n        prev_line = line\n    \n    final_text = '\\n'.join(result)\n    final_text = re.sub(r'\\n{3,}', '\\n\\n', final_text)\n    final_text = final_text.strip()\n    \n    return final_text\n\n# Main processing for n8n\ndef main():\n    rtf_data = None\n    result = None\n    \n    try:\n        # Convert JsProxy to Python dict if needed (for Pyodide in n8n)\n        working_item = item\n        if hasattr(item, 'to_py'):\n            working_item = item.to_py()\n        \n        # Handle different possible item structures in n8n\n        if isinstance(working_item, dict):\n            if 'data' in working_item:\n                rtf_data = working_item['data']\n            elif 'json' in working_item:\n                json_data = working_item['json']\n                if hasattr(json_data, 'to_py'):\n                    json_data = json_data.to_py()\n                if isinstance(json_data, dict) and 'data' in json_data:\n                    rtf_data = json_data['data']\n            else:\n                for key, value in working_item.items():\n                    if hasattr(value, 'to_py'):\n                        value = value.to_py()\n                    \n                    if isinstance(value, dict) and 'data' in value:\n                        rtf_data = value['data']\n                        break\n                    elif isinstance(value, str) and value.startswith('{\\\\rtf'):\n                        rtf_data = value\n                        break\n                \n            if rtf_data is None:\n                result = {\"error\": f\"No RTF data found in item. Item structure: {list(working_item.keys())}\"}\n        else:\n            result = {\"error\": f\"Expected item to be a dictionary after conversion, got {type(working_item)}\"}\n        \n        if rtf_data is not None and result is None:\n            if not isinstance(rtf_data, str):\n                result = {\"error\": f\"RTF data must be a string, got {type(rtf_data)}\"}\n            elif not rtf_data.strip():\n                result = {\"error\": \"RTF content is empty\"}\n            else:\n                # Parse RTF to plain text using adapted striprtf logic\n                plain_text = rtf_to_text(rtf_data)\n                \n                # Clean and format the text\n                formatted_text = clean_and_format_text(plain_text)\n                \n                result = {\"extracted_text\": formatted_text}\n        \n    except Exception as e:\n        result = {\"error\": f\"Error processing RTF data: {str(e)}\"}\n    \n    return result\n\n# Execute and return the result\nreturn main()"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1312,
+        336
+      ],
+      "id": "afabeb50-3ed6-44d2-aa8a-e8a551f86ff4",
+      "name": "Parse RTF"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "python",
+        "pythonCode": "# RTF Text Extractor for n8n Code Node - FINAL VERSION\n# Mode: \"Run once for each item\"\n# Based on striprtf library - uses only built-in Python libraries\n# Handles Pyodide JsProxy objects in n8n\n\nimport re\nimport codecs\n\n# Adapted from striprtf library (https://github.com/joshy/striprtf)\n# All code uses only Python built-in libraries - no external dependencies\n\ndestinations = frozenset((\n    'aftncn','aftnsep','aftnsepc','annotation','atnauthor','atndate','atnicn','atnid',\n    'atnparent','atnref','atntime','atrfend','atrfstart','author','background',\n    'bkmkend','bkmkstart','blipuid','buptim','category','colorschememapping',\n    'colortbl','comment','company','creatim','datafield','datastore','defchp','defpap',\n    'do','doccomm','docvar','dptxbxtext','ebcend','ebcstart','factoidname','falt',\n    'fchars','ffdeftext','ffentrymcr','ffexitmcr','ffformat','ffhelptext','ffl',\n    'ffname','ffstattext','file','filetbl','fldinst','fldtype','fonttbl',\n    'fname','fontemb','fontfile','footer','footerf','footerl','footerr',\n    'footnote','formfield','ftncn','ftnsep','ftnsepc','g','generator','gridtbl',\n    'header','headerf','headerl','headerr','hl','hlfr','hlinkbase','hlloc','hlsrc',\n    'hsv','htmltag','info','keycode','keywords','latentstyles','lchars','levelnumbers',\n    'leveltext','lfolevel','linkval','list','listlevel','listname','listoverride',\n    'listoverridetable','listpicture','liststylename','listtable','listtext',\n    'lsdlockedexcept','macc','maccPr','mailmerge','maln','malnScr','manager','margPr',\n    'mbar','mbarPr','mbaseJc','mbegChr','mborderBox','mborderBoxPr','mbox','mboxPr',\n    'mchr','mcount','mctrlPr','md','mdeg','mdegHide','mden','mdiff','mdPr','me',\n    'mendChr','meqArr','meqArrPr','mf','mfName','mfPr','mfunc','mfuncPr','mgroupChr',\n    'mgroupChrPr','mgrow','mhideBot','mhideLeft','mhideRight','mhideTop','mhtmltag',\n    'mlim','mlimloc','mlimlow','mlimlowPr','mlimupp','mlimuppPr','mm','mmaddfieldname',\n    'mmath','mmathPict','mmathPr','mmaxdist','mmc','mmcJc','mmconnectstr',\n    'mmconnectstrdata','mmcPr','mmcs','mmdatasource','mmheadersource','mmmailsubject',\n    'mmodso','mmodsofilter','mmodsofldmpdata','mmodsomappedname','mmodsoname',\n    'mmodsorecipdata','mmodsosort','mmodsosrc','mmodsotable','mmodsoudl',\n    'mmodsoudldata','mmodsouniquetag','mmPr','mmquery','mmr','mnary','mnaryPr',\n    'mnoBreak','mnum','mobjDist','moMath','moMathPara','moMathParaPr','mopEmu',\n    'mphant','mphantPr','mplcHide','mpos','mr','mrad','mradPr','mrPr','msepChr',\n    'mshow','mshp','msPre','msPrePr','msSub','msSubPr','msSubSup','msSubSupPr','msSup',\n    'msSupPr','mstrikeBLTR','mstrikeH','mstrikeTLBR','mstrikeV','msub','msubHide',\n    'msup','msupHide','mtransp','mtype','mvertJc','mvfmf','mvfml','mvtof','mvtol',\n    'mzeroAsc','mzeroDesc','mzeroWid','nesttableprops','nextfile','nonesttables',\n    'objalias','objclass','objdata','object','objname','objsect','objtime','oldcprops',\n    'oldpprops','oldsprops','oldtprops','oleclsid','operator','panose','password',\n    'passwordhash','pgp','pgptbl','picprop','pict','pn','pnseclvl','pntext','pntxta',\n    'pntxtb','printim','private','propname','protend','protstart','protusertbl','pxe',\n    'result','revtbl','revtim','rsidtbl','rxe','shp','shpgrp','shpinst',\n    'shppict','shprslt','shptxt','sn','sp','staticval','stylesheet','subject','sv',\n    'svb','tc','template','themedata','title','txe','ud','upr','userprops',\n    'wgrffmtfilter','windowcaption','writereservation','writereservhash','xe','xform',\n    'xmlattrname','xmlattrvalue','xmlclose','xmlname','xmlnstbl','xmlopen',\n))\n\ncharset_map = {\n    0: \"cp1252\", 42: \"cp1252\", 77: \"mac_roman\", 128: \"cp932\", 129: \"cp949\",\n    134: \"cp936\", 136: \"cp950\", 161: \"cp1253\", 162: \"cp1254\", 177: \"cp1255\",\n    178: \"cp1256\", 186: \"cp1257\", 204: \"cp1251\", 222: \"cp874\", 238: \"cp1250\",\n    254: \"cp437\", 255: \"cp850\",\n}\n\nsectionchars = {\"par\": \"\\n\", \"sect\": \"\\n\\n\", \"page\": \"\\n\\n\"}\nspecialchars = {\n    \"line\": \"\\n\", \"tab\": \"\\t\", \"emdash\": \"—\", \"endash\": \"–\", \"emspace\": \" \",\n    \"enspace\": \" \", \"qmspace\": \" \", \"bullet\": \"•\", \"lquote\": \"'\", \"rquote\": \"'\",\n    \"ldblquote\": \"\"\", \"rdblquote\": \"\"\", \"row\": \"\\n\", \"cell\": \"|\", \"nestcell\": \"|\",\n    \"~\": \" \", \"\\n\": \"\\n\", \"\\r\": \"\\r\", \"{\": \"{\", \"}\": \"}\", \"\\\\\": \"\\\\\",\n    \"-\": \"­\", \"_\": \"‑\", **sectionchars,\n}\n\nPATTERN = re.compile(\n    r\"\\\\([a-z]{1,32})(-?\\d{1,10})?[ ]?|\\\\'([0-9a-f]{2})|\\\\([^a-z])|([{}])|[\\r\\n]+|(.)\",\n    re.IGNORECASE,\n)\n\nHYPERLINKS = re.compile(\n    r\"(\\{\\\\field\\{\\s*\\\\\\*\\\\fldinst\\{.*HYPERLINK\\s(\\\".*\\\")\\}{2}\\s*\\{.*?\\s+(.*?)\\}{2,3})\",\n    re.IGNORECASE,\n)\n\nFONTTABLE = re.compile(r\"\\\\f(\\d+).*?\\\\fcharset(\\d+).*?([^;]+);\")\n\ndef remove_pict_groups(rtf_text):\n    if \"\\\\pict\" not in rtf_text or \"\\\\bin\" not in rtf_text:\n        return rtf_text\n    result = []\n    i = 0\n    n = len(rtf_text)\n    in_pict = False\n\n    while i < n:\n        if not in_pict and rtf_text.startswith(\"\\\\pict\", i):\n            in_pict = True\n            i += len(\"\\\\pict\")\n            continue\n\n        if in_pict:\n            if rtf_text.startswith(\"\\\\bin\", i):\n                i += len(\"\\\\bin\")\n                length_str = \"\"\n                while i < n and rtf_text[i].isdigit():\n                    length_str += rtf_text[i]\n                    i += 1\n                if length_str:\n                    i += int(length_str)\n                continue\n            elif rtf_text[i] == \"}\":\n                in_pict = False\n                i += 1\n                continue\n\n        if not in_pict:\n            result.append(rtf_text[i])\n        i += 1\n\n    return \"\".join(result)\n\ndef rtf_to_text(text, encoding=\"cp1252\", errors=\"ignore\"):\n    text = remove_pict_groups(text)\n    text = re.sub(HYPERLINKS, \"\\\\1(\\\\2)\", text)\n    \n    stack = []\n    fonttbl = {}\n    default_font = None\n    current_font = None\n    ignorable = False\n    suppress_output = False\n    ucskip = 1\n    curskip = 0\n    out = \"\"\n\n    fonttbl_matches = FONTTABLE.findall(text)\n    for font_id, fcharset, font_name in fonttbl_matches:\n        fonttbl[font_id] = {\n            \"name\": font_name.strip(),\n            \"charset\": fcharset,\n            \"encoding\": charset_map.get(int(fcharset), encoding),\n        }\n        \n    for match in PATTERN.finditer(text):\n        word, arg, _hex, char, brace, tchar = match.groups()\n        \n            \n        if brace:\n            curskip = 0\n            if brace == \"{\":\n                stack.append((ucskip, ignorable, suppress_output))\n            elif brace == \"}\":\n                if stack:\n                    ucskip, ignorable, suppress_output = stack.pop()\n                else:\n                    ucskip = 0\n                    ignorable = True\n                    \n        elif char:\n            curskip = 0\n            if char in specialchars:\n                if char in sectionchars:\n                    current_font = default_font\n                if not ignorable:\n                    out += specialchars[char]\n            elif char == \"*\":\n                ignorable = True\n                \n        elif word:\n            curskip = 0\n            if word in destinations:\n                ignorable = True\n            elif word == \"ansicpg\":\n                encoding = f\"cp{arg}\"\n                try:\n                    codecs.lookup(encoding)\n                except LookupError:\n                    encoding = \"utf8\"\n                    \n            if ignorable or suppress_output:\n                pass\n            elif word in specialchars:\n                out += specialchars[word]\n            elif word == \"uc\":\n                ucskip = int(arg) if arg else 1\n            elif word == \"u\":\n                if arg is None:\n                    curskip = ucskip\n                else:\n                    try:\n                        c = int(arg)\n                        if c < 0:\n                            c += 0x10000\n                        # Only add valid printable Unicode characters\n                        if 32 <= c < 0x110000 or c in [9, 10, 13]:  # Printable chars + tab, newline, carriage return\n                            out += chr(c)\n                        curskip = ucskip\n                    except:\n                        curskip = ucskip\n            elif word == \"f\":\n                current_font = arg\n            elif word == \"deff\":\n                default_font = arg\n            elif word == \"fonttbl\":\n                suppress_output = True\n            elif word == \"colortbl\":\n                suppress_output = True\n\n        elif _hex:\n            if curskip > 0:\n                curskip -= 1\n            elif not ignorable:\n                # Process hex character immediately\n                try:\n                    # Get the current encoding\n                    current_encoding = encoding\n                    if current_font and current_font in fonttbl:\n                        current_encoding = fonttbl[current_font].get(\"encoding\", encoding)\n                    \n                    # Decode hex byte\n                    decoded_byte = bytes.fromhex(_hex)\n                    char = decoded_byte.decode(encoding=current_encoding, errors=errors)\n                    out += char\n                except:\n                    # If decoding fails, try with default encoding\n                    try:\n                        char = bytes.fromhex(_hex).decode(encoding=\"cp1252\", errors=\"ignore\")\n                        if char and ord(char) >= 32:  # Only add printable characters\n                            out += char\n                    except:\n                        pass\n                    \n        elif tchar:\n            if curskip > 0:\n                curskip -= 1\n            elif not ignorable and not suppress_output:\n                out += tchar\n\n    return out\n\ndef clean_and_format_text(text):\n    if not text:\n        return \"\"\n    \n    # Fix common Unicode issues - but preserve actual characters\n    text = re.sub(r'[\\x00-\\x08\\x0B\\x0C\\x0E-\\x1F\\x7F]', '', text)  # Remove control characters\n    text = re.sub(r'\\xa0', ' ', text)  # Convert non-breaking spaces to regular spaces\n    text = re.sub(r'\\s+', ' ', text)  # Normalize whitespace\n    \n    # Add proper line breaks before questions\n    text = re.sub(r'(\\d+-\\d+\\.)', r'\\n\\1', text)\n    text = re.sub(r'(\\d+\\.)', r'\\n\\1', text)\n    \n    # Add line breaks before numbered paragraphs\n    text = re.sub(r'(\\d+\\s+[A-Z])', r'\\n\\1', text)\n    \n    # Ensure numbered paragraphs start with proper line breaks  \n    text = re.sub(r'([.!?])\\s*(\\d+\\s+[A-Z])', r'\\1\\n\\n\\2', text)\n    \n    # Add line breaks before section headings\n    text = re.sub(r'([a-z]\\.?)([A-Z][a-z]+\\s+[A-Z][a-z]+(?:\\s+[A-Z][a-z]+)*)', r'\\1\\n\\n\\2', text)\n    \n    # Fix specific transitions\n    text = re.sub(r'(truth\\?)([A-Z])', r'\\1\\n\\n\\2', text)\n    text = re.sub(r'(Progress)([A-Z])', r'\\1\\n\\n\\2', text)\n    text = re.sub(r'(Jehovah)([A-Z])', r'\\1\\n\\n\\2', text)\n    \n    # Clean up study article formatting\n    text = re.sub(r'Study Article\\s*\\d+', 'STUDY ARTICLE 27', text)\n    text = re.sub(r'Song\\s+\\d+', 'SONG 79', text)\n    \n    # Fix scripture references\n    text = re.sub(r'1\\s+Corinthians', '1 COR.', text)\n    text = re.sub(r'Matthew', 'Matt.', text)\n    text = re.sub(r',footnote', ', ftn', text)\n    \n    # Add answer placeholders\n    text = re.sub(r'(\\d+-\\d+\\.[^?]*\\?)', r'\\1\\n\\nYour answers', text)\n    text = re.sub(r'((?<!Your\\s)\\d+\\.[^?]*\\?)', r'\\1\\n\\nYour answer', text)\n    \n    # Clean up section headers  \n    text = re.sub(r'HELP YOUR STUDENT TO ([A-Z][A-Z\\s]*)', r'HELP YOUR STUDENT TO \\1', text)\n    \n    # Split into lines and clean\n    lines = text.split('\\n')\n    cleaned_lines = []\n    \n    for line in lines:\n        line = line.strip()\n        if line:\n            line = re.sub(r'\\s+', ' ', line)\n            cleaned_lines.append(line)\n    \n    # Join with appropriate spacing\n    result = []\n    prev_line = \"\"\n    \n    for line in cleaned_lines:\n        if not line:\n            continue\n            \n        if (line.startswith('STUDY ARTICLE') or \n            line.startswith('SONG') or\n            line.startswith('HELP YOUR STUDENT') or\n            line.startswith('SHOW CONFIDENCE') or\n            line.upper().startswith('FOCUS')):\n            if prev_line:\n                result.append('')\n            result.append(line)\n            result.append('')\n        elif re.match(r'^\\d+\\s+', line):\n            if prev_line:\n                result.append('')\n            result.append(line)\n        else:\n            result.append(line)\n            \n        prev_line = line\n    \n    final_text = '\\n'.join(result)\n    final_text = re.sub(r'\\n{3,}', '\\n\\n', final_text)\n    final_text = final_text.strip()\n    \n    return final_text\n\n# Main processing for n8n\ndef main():\n    rtf_data = None\n    result = None\n    \n    try:\n        # Convert JsProxy to Python dict if needed (for Pyodide in n8n)\n        working_item = item\n        if hasattr(item, 'to_py'):\n            working_item = item.to_py()\n        \n        # Handle different possible item structures in n8n\n        if isinstance(working_item, dict):\n            if 'data' in working_item:\n                rtf_data = working_item['data']\n            elif 'json' in working_item:\n                json_data = working_item['json']\n                if hasattr(json_data, 'to_py'):\n                    json_data = json_data.to_py()\n                if isinstance(json_data, dict) and 'data' in json_data:\n                    rtf_data = json_data['data']\n            else:\n                for key, value in working_item.items():\n                    if hasattr(value, 'to_py'):\n                        value = value.to_py()\n                    \n                    if isinstance(value, dict) and 'data' in value:\n                        rtf_data = value['data']\n                        break\n                    elif isinstance(value, str) and value.startswith('{\\\\rtf'):\n                        rtf_data = value\n                        break\n                \n            if rtf_data is None:\n                result = {\"error\": f\"No RTF data found in item. Item structure: {list(working_item.keys())}\"}\n        else:\n            result = {\"error\": f\"Expected item to be a dictionary after conversion, got {type(working_item)}\"}\n        \n        if rtf_data is not None and result is None:\n            if not isinstance(rtf_data, str):\n                result = {\"error\": f\"RTF data must be a string, got {type(rtf_data)}\"}\n            elif not rtf_data.strip():\n                result = {\"error\": \"RTF content is empty\"}\n            else:\n                # Parse RTF to plain text using adapted striprtf logic\n                plain_text = rtf_to_text(rtf_data)\n                \n                # Clean and format the text\n                formatted_text = clean_and_format_text(plain_text)\n                \n                result = {\"extracted_text\": formatted_text}\n        \n    except Exception as e:\n        result = {\"error\": f\"Error processing RTF data: {str(e)}\"}\n    \n    return result\n\n# Execute and return the result\nreturn main()"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1328,
+        -64
+      ],
+      "id": "83b7bba2-0792-4b7e-84a9-ba57464ec7c8",
+      "name": "Parse RTF1"
+    },
+    {
+      "parameters": {
+        "description": "This is a search tool, and should not be used for JW stuff"
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1.3,
+      "position": [
+        -304,
+        -112
+      ],
+      "id": "6d71dc74-cc43-41d8-a5fa-39f884c37aed",
+      "name": "search",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "description": "This is a fetch tool, and should not be used for JW stuff"
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1.3,
+      "position": [
+        -128,
+        -112
+      ],
+      "id": "314ce713-fc89-4a03-8299-8459ecc4f9f7",
+      "name": "fetch",
+      "disabled": true
     }
   ],
+  "pinData": {},
   "connections": {
     "Video Captions": {
       "ai_tool": [
@@ -913,6 +1330,34 @@
             "type": "main",
             "index": 0
           }
+        ],
+        [
+          {
+            "node": "Build WOL API URL",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build WOL API URL",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build WOL API URL",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build WOL API URL",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
@@ -982,7 +1427,7 @@
       "main": [
         [
           {
-            "node": "Format Workbook Content",
+            "node": "Parse RTF1",
             "type": "main",
             "index": 0
           }
@@ -1015,17 +1460,180 @@
       "main": [
         [
           {
-            "node": "Format Watchtower Content",
+            "node": "Parse RTF",
             "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build WOL API URL": {
+      "main": [
+        [
+          {
+            "node": "Call WOL API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call WOL API": {
+      "main": [
+        [
+          {
+            "node": "Has Study Articles",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Split Out1": {
+      "main": [
+        [
+          {
+            "node": "Get Article Info1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Article Info1": {
+      "main": [
+        [
+          {
+            "node": "HTML1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTML1": {
+      "main": [
+        [
+          {
+            "node": "Markdown",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Array1": {
+      "main": [
+        [
+          {
+            "node": "Split Out1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get JW Verse Info": {
+      "ai_tool": [
+        [
+          {
+            "node": "MCP Server Trigger",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Study Articles": {
+      "main": [
+        [
+          {
+            "node": "Set Array1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format WOL Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Markdown": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Format WOL Response1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse RTF": {
+      "main": [
+        []
+      ]
+    },
+    "Parse RTF1": {
+      "main": [
+        []
+      ]
+    },
+    "search": {
+      "ai_tool": [
+        [
+          {
+            "node": "MCP Server Trigger",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "fetch": {
+      "ai_tool": [
+        [
+          {
+            "node": "MCP Server Trigger",
+            "type": "ai_tool",
             "index": 0
           }
         ]
       ]
     }
   },
-  "pinData": {},
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "c1c65795-f1fd-418c-a096-0d2a2490779a",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "dc294d87d63db94196681e0c32af91e1009d220b8a6ea94891b94cb4e59fd053"
-  }
+  },
+  "id": "8y0SXa4FULuB2w7s",
+  "tags": [
+    {
+      "updatedAt": "2025-05-29T16:10:16.382Z",
+      "createdAt": "2025-05-29T16:10:16.382Z",
+      "id": "UFtEV3dmw7RCJvEJ",
+      "name": "MCP Server"
+    }
+  ]
 }
