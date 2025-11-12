@@ -1,4 +1,5 @@
 import { fetchPublicationData, downloadRtfContent, getCurrentWatchtowerIssue } from './rtf-utils.js';
+import { parseRTF } from './rtf-parser.js';
 
 /**
  * Get available Watchtower articles for a specific issue
@@ -33,10 +34,25 @@ export async function getWatchtowerLinks(pub = 'w', langwritten = 'E', issue = n
 }
 
 /**
- * Fetch Watchtower article content from a given URL
+ * Fetch Watchtower article content from a given URL and parse it to plain text
  */
 export async function getWatchtowerContent(url) {
-  return await downloadRtfContent(url);
+  const rtfData = await downloadRtfContent(url);
+
+  try {
+    // Parse RTF to plain text
+    const parsedText = parseRTF(rtfData.content);
+
+    return {
+      url: rtfData.url,
+      contentType: rtfData.contentType,
+      originalSize: rtfData.size,
+      parsedText: parsedText,
+      parsedSize: parsedText.length
+    };
+  } catch (error) {
+    throw new Error(`Failed to parse RTF content: ${error.message}`);
+  }
 }
 
 // Tool definitions for the MCP server
@@ -72,7 +88,7 @@ export const watchtowerTools = [
   },
   {
     name: 'getWatchtowerContent',
-    description: 'STEP 2: Get the actual Watchtower article content after user chooses an article. Use this tool AFTER getWatchtowerLinks when user specifies which article they want (e.g., "Imitate the Faithful Angels" or "Look to Jehovah for Comfort"). Takes the RTF URL from Step 1 results and returns the full article text content.',
+    description: 'STEP 2: Get the actual Watchtower article content after user chooses an article. Use this tool AFTER getWatchtowerLinks when user specifies which article they want (e.g., "Imitate the Faithful Angels" or "Look to Jehovah for Comfort"). Takes the RTF URL from Step 1 results, downloads the RTF file, parses it to clean plain text, and returns the formatted article content with proper structure and line breaks.',
     inputSchema: {
       type: 'object',
       properties: {

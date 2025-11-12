@@ -1,4 +1,5 @@
 import { fetchPublicationData, downloadRtfContent, getCurrentIssue } from './rtf-utils.js';
+import { parseRTF } from './rtf-parser.js';
 
 /**
  * Get available workbook links for a specific issue
@@ -31,10 +32,25 @@ export async function getWorkbookLinks(pub = 'mwb', langwritten = 'E', issue = n
 }
 
 /**
- * Fetch RTF content from a given URL
+ * Fetch RTF content from a given URL and parse it to plain text
  */
 export async function getWorkbookContent(url) {
-  return await downloadRtfContent(url);
+  const rtfData = await downloadRtfContent(url);
+
+  try {
+    // Parse RTF to plain text
+    const parsedText = parseRTF(rtfData.content);
+
+    return {
+      url: rtfData.url,
+      contentType: rtfData.contentType,
+      originalSize: rtfData.size,
+      parsedText: parsedText,
+      parsedSize: parsedText.length
+    };
+  } catch (error) {
+    throw new Error(`Failed to parse RTF content: ${error.message}`);
+  }
 }
 
 // Tool definitions for the MCP server
@@ -70,7 +86,7 @@ export const workbookTools = [
   },
   {
     name: 'getWorkbookContent',
-    description: 'STEP 2: Get the actual CLM workbook content after user chooses a week. Use this tool AFTER getWorkbookLinks when user specifies which week they want (e.g., "May 5-11" or "June 30-July 6"). Takes the RTF URL from Step 1 results and returns the full workbook text content for that specific week.',
+    description: 'STEP 2: Get the actual CLM workbook content after user chooses a week. Use this tool AFTER getWorkbookLinks when user specifies which week they want (e.g., "May 5-11" or "June 30-July 6"). Takes the RTF URL from Step 1 results, downloads the RTF file, parses it to clean plain text, and returns the formatted workbook content with proper line breaks and structure.',
     inputSchema: {
       type: 'object',
       properties: {

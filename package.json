@@ -1,7 +1,7 @@
 {
   "name": "jw-mcp",
   "version": "1.0.0",
-  "description": "MCP server for fetching JW.org video captions",
+  "description": "MCP server for JW.org content: Bible scripture lookup with study content, workbook materials, Watchtower articles, and video captions",
   "main": "index.js",
   "type": "module",
   "scripts": {
@@ -12,9 +12,10 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^0.5.0",
+    "cheerio": "^1.1.2",
     "node-fetch": "^3.3.2"
   },
   "devDependencies": {
     "@types/node": "^20.0.0"
   }
-} 
+}

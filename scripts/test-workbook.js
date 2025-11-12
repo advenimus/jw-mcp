@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { getWorkbookLinks, getWorkbookContent } from './src/tools/workbook-tools.js';
+import { getWorkbookLinks, getWorkbookContent } from '../src/tools/workbook-tools.js';
 
 async function testWorkbookTools() {
   console.log('🔍 Testing getWorkbookLinks...');

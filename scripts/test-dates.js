@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { getCurrentIssue, getCurrentWatchtowerIssue } from './src/tools/rtf-utils.js';
+import { getCurrentIssue, getCurrentWatchtowerIssue } from '../src/tools/rtf-utils.js';
 
 console.log('📅 Date Calculation Test');
 console.log('Current date: May 27, 2025');

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { getCaptionsImplementation } from './src/tools/captions-tool.js';
+import { getCaptionsImplementation } from '../src/tools/captions-tool.js';
 
 console.log('🎥 Final Test: Video Captions Tool with URL Support');
 console.log('='.repeat(60));

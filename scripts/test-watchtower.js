@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { getWatchtowerLinks, getWatchtowerContent } from './src/tools/watchtower-tools.js';
+import { getWatchtowerLinks, getWatchtowerContent } from '../src/tools/watchtower-tools.js';
 
 async function testWatchtowerTools() {
   console.log('🔍 Testing getWatchtowerLinks...');

@@ -8,6 +8,12 @@ import {
 import { captionsTool, handleCaptionsTool } from './tools/captions-tool.js';
 import { workbookTools, handleWorkbookTools } from './tools/workbook-tools.js';
 import { watchtowerTools, handleWatchtowerTools } from './tools/watchtower-tools.js';
+import {
+  searchBibleBooksTool,
+  getBibleVerseTool,
+  getVerseWithStudyTool,
+  handleScriptureTools
+} from './tools/scripture-tools.js';
 
 // Create server instance
 const server = new Server(
@@ -26,14 +32,18 @@ const server = new Server(
 const allTools = [
   captionsTool,
   ...workbookTools,
-  ...watchtowerTools
+  ...watchtowerTools,
+  searchBibleBooksTool,
+  getBibleVerseTool,
+  getVerseWithStudyTool
 ];
 
 // Collect all tool handlers
 const toolHandlers = [
   handleCaptionsTool,
   handleWorkbookTools,
-  handleWatchtowerTools
+  handleWatchtowerTools,
+  handleScriptureTools
 ];
 
 // Register tools
