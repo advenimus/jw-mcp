@@ -11,7 +11,8 @@ RUN npm ci --ignore-scripts
 # Copy source
 COPY . ./
 
-# Expose no port since this is stdio
+# Expose port for HTTP transport (Smithery uses 8081)
+EXPOSE 8081
 
-# Default command
-CMD ["node", "src/index.js"]
+# Default command - run HTTP server
+CMD ["node", "src/http-server.js"]
