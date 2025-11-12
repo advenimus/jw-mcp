@@ -11,8 +11,10 @@ This MCP server provides four main categories of tools:
 - **`search_bible_books`**: Search for Bible books by name or abbreviation to find book numbers
 - **`get_bible_verse`**: Get plain Bible verse text from wol.jw.org
 - **`get_verse_with_study`**: Get comprehensive study content including verses, study notes, cross-references, and research articles. Supports verse ranges.
+- **`get_bible_verse_url`**: Generate JW.org URLs for Bible verses, ranges, or chapters. Perfect for adding clickable scripture links to markdown documents.
 
 ![Scripture Tools Demo](assets/images/scripture-tools-demo.png)
+![Get Verse URL Demo](assets/images/get-verse-url.png)
 
 ### 📚 **Christian Life and Ministry Workbook Tools**
 - **`getWorkbookLinks`**: Get available workbook weeks for current or specific issue
@@ -155,6 +157,50 @@ Get plain Bible verse text from wol.jw.org. Returns just the verse text without 
   "text": "16 \"For God loved the world so much that he gave his only-begotten Son,+ so that everyone exercising faith in him might not be destroyed but have everlasting life.+"
 }
 ```
+
+#### `get_bible_verse_url`
+Generate JW.org URLs for Bible verses, verse ranges, or entire chapters. The URLs always open on JW.org and can be used to create clickable scripture links in markdown documents. Ideal for asking the LLM to edit markdown files and add links to each verse reference.
+
+**Input:**
+- `book` (required): Bible book number (1-66)
+- `chapter` (required): Chapter number
+- `verse` (optional): Verse reference - can be:
+  - Single verse: `"18"`
+  - Verse range: `"14-16"`
+  - Comma-separated verses: `"1,3,5"` (converts to range if contiguous)
+  - Omit for entire chapter URL
+
+**Examples:**
+```json
+// Single verse
+{
+  "book": 19,
+  "chapter": 83,
+  "verse": "18"
+}
+// Returns: https://www.jw.org/finder?wtlocale=E&prefer=lang&bible=19083018&pub=nwtsty
+
+// Verse range
+{
+  "book": 23,
+  "chapter": 46,
+  "verse": "9-11"
+}
+// Returns: https://www.jw.org/finder?wtlocale=E&prefer=lang&bible=23046009-23046011&pub=nwtsty
+
+// Entire chapter
+{
+  "book": 40,
+  "chapter": 5
+}
+// Returns: https://www.jw.org/finder?wtlocale=E&prefer=lang&bible=40005&pub=nwtsty
+```
+
+**Use Cases:**
+- Adding clickable links to scripture references in markdown documents
+- Creating study guides with linked Bible verses
+- Automating scripture link generation in bulk
+- Building markdown files with proper JW.org references
 
 #### `get_verse_with_study`
 Get comprehensive study content for Bible verses. Supports single verses or ranges, with customizable field selection.
@@ -407,6 +453,32 @@ Fetches video captions and metadata by video ID or URL.
 ```
 
 ![Get Verse With Study Example](assets/images/get-verse-with-study.png)
+
+### Get Bible Verse URL
+```json
+// Get URL for Psalm 83:18
+{
+  "tool": "get_bible_verse_url",
+  "book": 19,
+  "chapter": 83,
+  "verse": "18"
+}
+
+// Get URL for verse range (Matthew 5:3-12)
+{
+  "tool": "get_bible_verse_url",
+  "book": 40,
+  "chapter": 5,
+  "verse": "3-12"
+}
+
+// Get URL for entire chapter (John 3)
+{
+  "tool": "get_bible_verse_url",
+  "book": 43,
+  "chapter": 3
+}
+```
 
 ### Get Current Workbook Weeks
 ```json

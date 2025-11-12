@@ -300,6 +300,120 @@ export async function getVerseWithStudyImplementation(book, chapter, verse, fiel
 }
 
 // ============================================================================
+// Tool 4: get_bible_verse_url
+// ============================================================================
+
+export const getBibleVerseURLTool = {
+  name: 'get_bible_verse_url',
+  description: 'Get the jw.org URL for a Bible verse or range of verses. Returns a direct link to view the scripture on jw.org. Supports single verses (e.g., verse: "18"), verse ranges (e.g., verse: "14-16"), and comma-separated verses (e.g., verse: "1,3,5" - will convert to range if contiguous). Use search_bible_books to find book numbers. Perfect for adding clickable scripture links to markdown documents.',
+  inputSchema: {
+    type: 'object',
+    properties: {
+      book: {
+        type: 'number',
+        description: 'Bible book number (1-66). Examples: Genesis=1, Psalms=19, Isaiah=23, Matthew=40, Revelation=66. Use search_bible_books to find book numbers.'
+      },
+      chapter: {
+        type: 'number',
+        description: 'Chapter number within the book'
+      },
+      verse: {
+        type: 'string',
+        description: 'Optional verse reference. Can be: single verse ("18"), verse range ("14-16"), or comma-separated verses ("1,3,5"). If omitted, returns URL for the entire chapter.'
+      }
+    },
+    required: ['book', 'chapter']
+  }
+};
+
+export async function getBibleVerseURLImplementation(book, chapter, verse) {
+  try {
+    // Validate the reference (use verse 1 if no verse provided for validation)
+    const verseForValidation = verse ? (verse.toString().split(/[-,]/)[0]) : 1;
+    const validation = validateReference(book, chapter, parseInt(verseForValidation));
+    if (!validation.valid) {
+      return {
+        content: [{
+          type: 'text',
+          text: `Validation error: ${validation.error}`
+        }],
+        isError: true
+      };
+    }
+
+    // Format book and chapter with zero-padding
+    const bookNum = book.toString();
+    const chapterNum = chapter.toString().padStart(3, '0');
+
+    let bibleParam;
+    let verseDisplay;
+
+    if (verse) {
+      // Parse verse parameter
+      const verseStr = verse.toString();
+
+      // Check if it contains a comma (multiple verses)
+      if (verseStr.includes(',')) {
+        const verseArray = verseStr.split(',').map(v => parseInt(v.trim())).sort((a, b) => a - b);
+
+        // Check if verses are contiguous
+        const isContiguous = verseArray.every((v, i) => i === 0 || v === verseArray[i - 1] + 1);
+
+        if (isContiguous && verseArray.length > 1) {
+          // Convert to range
+          const startVerse = verseArray[0].toString().padStart(3, '0');
+          const endVerse = verseArray[verseArray.length - 1].toString().padStart(3, '0');
+          bibleParam = `${bookNum}${chapterNum}${startVerse}-${bookNum}${chapterNum}${endVerse}`;
+          verseDisplay = `${verseArray[0]}-${verseArray[verseArray.length - 1]}`;
+        } else {
+          // Use just the first verse for non-contiguous
+          const firstVerse = verseArray[0].toString().padStart(3, '0');
+          bibleParam = `${bookNum}${chapterNum}${firstVerse}`;
+          verseDisplay = verseArray[0].toString();
+        }
+      }
+      // Check if it contains a dash (range)
+      else if (verseStr.includes('-')) {
+        const [startVerse, endVerse] = verseStr.split('-').map(v => v.trim());
+        const startVersePadded = startVerse.padStart(3, '0');
+        const endVersePadded = endVerse.padStart(3, '0');
+        bibleParam = `${bookNum}${chapterNum}${startVersePadded}-${bookNum}${chapterNum}${endVersePadded}`;
+        verseDisplay = `${startVerse}-${endVerse}`;
+      }
+      // Single verse
+      else {
+        const versePadded = verseStr.padStart(3, '0');
+        bibleParam = `${bookNum}${chapterNum}${versePadded}`;
+        verseDisplay = verseStr;
+      }
+    } else {
+      // Chapter only (no verse specified)
+      bibleParam = `${bookNum}${chapterNum}`;
+      verseDisplay = null;
+    }
+
+    // Build the jw.org/finder URL
+    const url = `https://www.jw.org/finder?wtlocale=E&prefer=lang&bible=${bibleParam}&pub=nwtsty`;
+
+    return {
+      content: [{
+        type: 'text',
+        text: url
+      }]
+    };
+
+  } catch (error) {
+    return {
+      content: [{
+        type: 'text',
+        text: `Error generating Bible verse URL: ${error.message}`
+      }],
+      isError: true
+    };
+  }
+}
+
+// ============================================================================
 // Tool Handler
 // ============================================================================
 
@@ -329,6 +443,13 @@ export async function handleScriptureTools(request) {
         args.fields,
         args.limit,
         args.fetch
+      );
+
+    case 'get_bible_verse_url':
+      return await getBibleVerseURLImplementation(
+        args.book,
+        args.chapter,
+        args.verse
       );
 
     default:

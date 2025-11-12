@@ -12,6 +12,7 @@ import {
   searchBibleBooksTool,
   getBibleVerseTool,
   getVerseWithStudyTool,
+  getBibleVerseURLTool,
   handleScriptureTools
 } from './tools/scripture-tools.js';
 
@@ -35,7 +36,8 @@ const allTools = [
   ...watchtowerTools,
   searchBibleBooksTool,
   getBibleVerseTool,
-  getVerseWithStudyTool
+  getVerseWithStudyTool,
+  getBibleVerseURLTool
 ];
 
 // Collect all tool handlers
