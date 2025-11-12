@@ -21,7 +21,9 @@ const app = express();
 app.use(cors({
   exposedHeaders: ['Mcp-Session-Id', 'Content-Type']
 }));
-app.use(express.json());
+// NOTE: Do NOT use express.json() middleware here!
+// StreamableHTTPServerTransport needs access to the raw request stream.
+// express.json() consumes the stream, causing "stream is not readable" errors.
 
 // Create server instance
 const server = new Server(
