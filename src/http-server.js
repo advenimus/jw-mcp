@@ -48,7 +48,7 @@ const toolHandlers = [
 ];
 
 // Function to create and configure a new MCP Server instance
-function createServer() {
+function createServer(requestId = 'unknown') {
   const server = new Server(
     {
       name: 'jw-mcp',
@@ -63,6 +63,7 @@ function createServer() {
 
   // Register tools
   server.setRequestHandler(ListToolsRequestSchema, async () => {
+    console.log(`[${requestId}] ListTools called — returning ${allTools.length} tools`);
     return {
       tools: allTools,
     };
@@ -70,24 +71,41 @@ function createServer() {
 
   // Handle tool calls by delegating to appropriate handlers
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
-    // Try each handler until one returns a result
-    for (const handler of toolHandlers) {
-      const result = await handler(request);
-      if (result !== null) {
-        return result;
-      }
-    }
+    const toolName = request.params.name;
+    const args = request.params.arguments;
+    const toolStart = Date.now();
+    console.log(`[${requestId}] ToolCall: ${toolName} args=${JSON.stringify(args)}`);
 
-    // If no handler matched, return error
-    return {
-      content: [
-        {
-          type: 'text',
-          text: `Unknown tool: ${request.params.name}`,
-        },
-      ],
-      isError: true,
-    };
+    try {
+      // Try each handler until one returns a result
+      for (const handler of toolHandlers) {
+        const result = await handler(request);
+        if (result !== null) {
+          const duration = Date.now() - toolStart;
+          const isError = result.isError || false;
+          const preview = result.content?.[0]?.text?.slice(0, 200) || '';
+          console.log(`[${requestId}] ToolResult: ${toolName} ${isError ? 'ERROR' : 'OK'} ${duration}ms preview=${preview}`);
+          return result;
+        }
+      }
+
+      console.error(`[${requestId}] ToolResult: ${toolName} — no handler matched`);
+      // If no handler matched, return error
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Unknown tool: ${toolName}`,
+          },
+        ],
+        isError: true,
+      };
+    } catch (error) {
+      const duration = Date.now() - toolStart;
+      console.error(`[${requestId}] ToolError: ${toolName} ${duration}ms — ${error.message}`);
+      console.error(`[${requestId}] ToolStack: ${error.stack}`);
+      throw error;
+    }
   });
 
   return server;
@@ -98,8 +116,12 @@ function createServer() {
 // requests may be routed to different container instances without sticky sessions.
 
 app.post('/mcp', async (req, res) => {
+  const requestId = Math.random().toString(36).slice(2, 10);
+  const startTime = Date.now();
+  console.log(`[${requestId}] POST /mcp received`);
+
   // Create fresh instances for this request only
-  const server = createServer();
+  const server = createServer(requestId);
   const transport = new StreamableHTTPServerTransport({
     sessionIdGenerator: undefined  // Critical: undefined for stateless mode
   });
@@ -110,19 +132,22 @@ app.post('/mcp', async (req, res) => {
 
     // Set up cleanup when response finishes
     res.on('close', () => {
+      const duration = Date.now() - startTime;
+      console.log(`[${requestId}] Request completed in ${duration}ms`);
       try {
         transport.close?.();
         server.close?.();
       } catch (cleanupError) {
-        console.error('Error during cleanup:', cleanupError);
+        console.error(`[${requestId}] Cleanup error:`, cleanupError);
       }
     });
 
     // Handle the request
     await transport.handleRequest(req, res);
   } catch (error) {
-    console.error('Error handling POST request:', error);
-    console.error('Error stack:', error.stack);
+    const duration = Date.now() - startTime;
+    console.error(`[${requestId}] Error after ${duration}ms:`, error.message);
+    console.error(`[${requestId}] Stack:`, error.stack);
     if (!res.headersSent) {
       res.status(500).json({ error: 'Internal server error', details: error.message });
     }
