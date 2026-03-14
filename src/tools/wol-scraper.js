@@ -58,12 +58,16 @@ export class WOLScraper {
       // Extract verse-specific study notes
       const verseStudyNotes = this.extractVerseStudyNotes($, bookNum, chapterNum);
 
+      // Extract verse-specific research guide articles
+      const verseStudyArticles = this.extractVerseResearchGuideArticles($, bookNum, chapterNum);
+
       // Extract all verses from the chapter
       const verses = this.extractVerses($, bookNum, chapterNum);
 
       return {
         chapter_study_data: chapterStudyData,
         verse_study_notes: verseStudyNotes,
+        verse_study_articles: verseStudyArticles,
         verses: verses
       };
 
@@ -204,6 +208,164 @@ export class WOLScraper {
     });
 
     return verseNotes;
+  }
+
+  /**
+   * Extract research guide articles per-verse from div.section[data-key] elements.
+   * Each verse section (e.g., data-key="45-7-23" for Romans 7:23) has its own
+   * Research Guide entries. This method maps them by verse number so articles
+   * can be filtered to the requested verse range.
+   * @param {CheerioAPI} $ - Cheerio instance
+   * @param {number} bookNum - Book number
+   * @param {number} chapterNum - Chapter number
+   * @returns {Object} Map of verse numbers to article arrays: { verseNum: [articles] }
+   */
+  extractVerseResearchGuideArticles($, bookNum, chapterNum) {
+    const verseArticles = {};
+
+    $('div.section[data-key]').each((i, section) => {
+      const dataKey = $(section).attr('data-key');
+      if (!dataKey) return;
+
+      // Parse data-key (format: book-chapter-verse)
+      const parts = dataKey.split('-');
+      if (parts.length < 3) return;
+
+      const sectionBook = parseInt(parts[0]);
+      const sectionChapter = parseInt(parts[1]);
+      const sectionVerse = parseInt(parts[2]);
+
+      if (sectionBook !== bookNum || sectionChapter !== chapterNum) return;
+      if (isNaN(sectionVerse)) return;
+
+      // Find ref-rsg items within this verse section
+      const rsgItems = $(section).find('li.item.ref-rsg');
+      if (rsgItems.length === 0) return;
+
+      const articles = [];
+
+      rsgItems.each((itemIndex, item) => {
+        this.extractArticlesFromRsgElement($, item, articles);
+      });
+
+      if (articles.length > 0) {
+        verseArticles[sectionVerse] = articles;
+      }
+    });
+
+    return verseArticles;
+  }
+
+  /**
+   * Extract articles from a single li.item.ref-rsg element.
+   * Handles su (subject heading) and sk (sub-item) paragraph structures.
+   * Properly combines multi-part titles (e.g., "The Watchtower," + "6/15/2008, p. 30").
+   * @param {CheerioAPI} $ - Cheerio instance
+   * @param {Element} item - The li.item.ref-rsg element
+   * @param {Array} articles - Array to push extracted articles into
+   */
+  extractArticlesFromRsgElement($, item, articles) {
+    const classify = (url, title) => {
+      const u = url.toLowerCase();
+      const t = title.toLowerCase();
+      if (u.includes('watchtower') || t.includes('watchtower')) return 'watchtower';
+      if (u.includes('awake') || t.includes('awake')) return 'awake';
+      if (u.includes('/pc/') || u.includes('/d/')) return 'research';
+      return 'other';
+    };
+
+    const paragraphs = $(item).find('p').toArray();
+    let i = 0;
+
+    while (i < paragraphs.length) {
+      const p = paragraphs[i];
+      const classes = ($(p).attr('class') || '').toLowerCase();
+
+      if (classes.includes('su')) {
+        const suAnchors = $(p).find('a[href]').toArray();
+
+        if (suAnchors.length > 0) {
+          let added = false;
+          let j = i + 1;
+
+          // Look for following "sk" paragraphs (sub-items like date/page for Watchtower)
+          while (j < paragraphs.length) {
+            const pNext = paragraphs[j];
+            const nextClasses = ($(pNext).attr('class') || '').toLowerCase();
+            if (!nextClasses.includes('sk')) break;
+
+            // For SU+SK pairs (e.g., "The Watchtower," + "6/15/2008, p. 30"):
+            // Combine the SU label with the SK text to form the full title.
+            // Both typically share the same href.
+            const suLabel = suAnchors
+              .map(a => $(a).text().trim())
+              .filter(text => text)
+              .join(' ');
+
+            const skAnchors = $(pNext).find('a[href]').toArray();
+            for (const a of skAnchors) {
+              const href = $(a).attr('href') || '';
+              const text = $(a).text().trim();
+              if (!href || !text) continue;
+
+              const fullUrl = href.startsWith('/')
+                ? `https://wol.jw.org${href}`
+                : href;
+
+              const title = `${suLabel} ${text}`.trim();
+              articles.push({ title, url: fullUrl, type: classify(fullUrl, title) });
+              added = true;
+            }
+
+            j++;
+          }
+
+          if (added) {
+            i = j - 1;
+          }
+
+          // If no SK items: process SU anchors directly.
+          // For multi-anchor SU entries (e.g., "Insight, Vol 2, pp. 224," + " 966-967"),
+          // each anchor references different pages in the same publication.
+          if (!added) {
+            if (suAnchors.length === 1) {
+              // Single anchor: use its text directly
+              const a = suAnchors[0];
+              const href = $(a).attr('href') || '';
+              const text = $(a).text().trim().replace(/,\s*$/, '');
+              if (href && text) {
+                const fullUrl = href.startsWith('/') ? `https://wol.jw.org${href}` : href;
+                articles.push({ title: text, url: fullUrl, type: classify(fullUrl, text) });
+              }
+            } else {
+              // Multi-anchor: extract publication prefix from first anchor,
+              // prepend to subsequent page-only anchors for complete titles
+              const firstText = $(suAnchors[0]).text().trim();
+              // Extract pub prefix (e.g., "Insight, Volume 2, " from "Insight, Volume 2, pp. 224,")
+              const prefixMatch = firstText.match(/^(.+?(?:Volume\s+\d+),?\s*)/i);
+              const pubPrefix = prefixMatch ? prefixMatch[1].replace(/,\s*$/, '') : '';
+
+              for (const a of suAnchors) {
+                const href = $(a).attr('href') || '';
+                let text = $(a).text().trim().replace(/,\s*$/, '');
+                if (!href || !text) continue;
+
+                // If this anchor's text starts with a page number (continuation),
+                // prepend the publication prefix
+                if (a !== suAnchors[0] && pubPrefix && /^[\s\d]/.test($(a).text())) {
+                  text = `${pubPrefix}, pp. ${text.trim()}`;
+                }
+
+                const fullUrl = href.startsWith('/') ? `https://wol.jw.org${href}` : href;
+                articles.push({ title: text, url: fullUrl, type: classify(fullUrl, text) });
+              }
+            }
+          }
+        }
+      }
+
+      i++;
+    }
   }
 
   /**
@@ -451,12 +613,33 @@ export class WOLScraper {
       }
     }
 
-    if (fields.includes('study_articles') && content.chapter_study_data) {
-      let articles = content.chapter_study_data.study_articles;
-      if (limit && articles.length > limit) {
-        articles = articles.slice(0, limit);
+    if (fields.includes('study_articles')) {
+      // Use verse-specific articles (filtered to requested range)
+      const allArticles = [];
+      const seenUrls = new Set();
+      const seenTitles = new Set();
+
+      for (let v = verseStart; v <= verseEnd; v++) {
+        if (content.verse_study_articles[v]) {
+          for (const article of content.verse_study_articles[v]) {
+            // Deduplicate by URL or title (same article is cited from
+            // multiple verse sections with different /pc/ URLs)
+            const titleKey = article.title.toLowerCase().trim();
+            if (seenUrls.has(article.url) || seenTitles.has(titleKey)) continue;
+
+            seenUrls.add(article.url);
+            seenTitles.add(titleKey);
+            allArticles.push(article);
+          }
+        }
       }
-      result.study_articles = articles;
+
+      if (limit && allArticles.length > limit) {
+        result.study_articles = allArticles.slice(0, limit);
+      } else {
+        result.study_articles = allArticles;
+      }
+      result.study_articles_count = result.study_articles.length;
     }
 
     if (fields.includes('cross_references') && content.chapter_study_data) {
