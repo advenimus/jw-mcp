@@ -1,8 +1,8 @@
 {
   "name": "jw-mcp",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "MCP server for JW.org content: Bible scripture lookup with study content, workbook materials, Watchtower articles, and video captions",
-  "main": "index.js",
+  "main": "src/index.js",
   "type": "module",
   "scripts": {
     "start": "node src/index.js",
@@ -10,6 +10,30 @@
   },
   "bin": {
     "jw-mcp": "./src/index.js"
+  },
+  "files": [
+    "src/"
+  ],
+  "keywords": [
+    "mcp",
+    "mcp-server",
+    "jw",
+    "jw.org",
+    "bible",
+    "scripture",
+    "watchtower",
+    "study-notes",
+    "wol"
+  ],
+  "author": "advenimus",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/advenimus/jw-mcp.git"
+  },
+  "homepage": "https://github.com/advenimus/jw-mcp#readme",
+  "engines": {
+    "node": ">=18.0.0"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.21.1",

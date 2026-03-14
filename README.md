@@ -1,85 +1,80 @@
 # JW MCP Server
+
+[![npm version](https://img.shields.io/npm/v/jw-mcp)](https://www.npmjs.com/package/jw-mcp)
 [![smithery badge](https://smithery.ai/badge/@advenimus/jw-mcp)](https://smithery.ai/server/@advenimus/jw-mcp)
 
 An MCP (Model Context Protocol) server that provides tools for working with JW.org content, including workbook materials, Watchtower articles, video captions, and comprehensive Bible scripture lookup with study content.
 
-## Features
+## Quick Start
 
-This MCP server provides four main categories of tools:
+### Claude Code (Recommended)
 
-### 📖 **Bible Scripture Tools** (NEW!)
-- **`search_bible_books`**: Search for Bible books by name or abbreviation to find book numbers
-- **`get_bible_verse`**: Get plain Bible verse text from wol.jw.org
-- **`get_verse_with_study`**: Get comprehensive study content including verses, study notes, cross-references, and research articles. Supports verse ranges.
-- **`get_bible_verse_url`**: Generate JW.org URLs for Bible verses, ranges, or chapters. Perfect for adding clickable scripture links to markdown documents.
+```bash
+claude mcp add jw-mcp -- npx -y jw-mcp
+```
 
-![Scripture Tools Demo](assets/images/scripture-tools-demo.png)
-![Get Verse URL Demo](assets/images/get-verse-url.png)
+That's it. The server auto-installs and stays up to date via npx.
 
-### 📚 **Christian Life and Ministry Workbook Tools**
-- **`getWorkbookLinks`**: Get available workbook weeks for current or specific issue
-- **`getWorkbookContent`**: Download and parse RTF content to clean plain text (70% token reduction!)
+### Claude Desktop
 
-![Workbook Tools Demo](assets/images/get-clm-workbook-info.png)
+Add to your config file:
 
-### 📰 **Watchtower Study Tools**
-- **`getWatchtowerLinks`**: Get available Watchtower articles for current or specific issue
-- **`getWatchtowerContent`**: Download and parse RTF content to clean plain text (70% token reduction!)
-
-![Watchtower Tools Demo](assets/images/get-wt-info.png)
-
-### 🎥 **Video Caption Tools**
-- **`get_jw_captions`**: Retrieves video metadata and subtitle content from JW.org by video ID
-
-![Video Captions Demo](assets/images/get-video-captions.png)
-
-### ⚡ **Smart Features**
-- **Automatic Date Handling**: Workbook uses current month; Watchtower automatically calculates correct issue (2 months behind)
-- **RTF Parsing**: Automatically converts RTF files to clean, readable plain text with 70% token reduction
-- **Live Web Scraping**: Scripture tools fetch fresh content directly from wol.jw.org with no database required
-
-## What's New 🎉
-
-### Latest Updates
-- **NEW Scripture Tools**: Search Bible books, get verses, and comprehensive study content with notes and research articles
-- **RTF Parser**: Watchtower and Workbook tools now return clean, formatted text instead of raw RTF (70% smaller!)
-- **Web Scraping**: Live scripture lookup from wol.jw.org with verse-specific study notes and cross-references
-
-# Quick Start
-
-## Installation
-
-### Installing via Smithery (Recommended)
-
-To install jw-mcp for Claude Desktop automatically via [Smithery](https://smithery.ai/server/@advenimus/jw-mcp):
-
-On this page, click the relevant install option for your client
-![Smithery Install](assets/images/smithery-intall.png)
-
-
-## Manual Local Install
-
-1. Clone this repository
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-
-### Claude Desktop Setup
-If cloned manually to a folder on your system, update your Claude Desktop config (`~/Library/Application Support/Claude/claude_desktop_config.json`):
+- **macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Windows:** `%APPDATA%\Claude\claude_desktop_config.json`
 
 ```json
 {
   "mcpServers": {
     "jw-mcp": {
-      "command": "node",
-      "args": ["/Users/<username>/jw-mcp/src/index.js"]
+      "command": "npx",
+      "args": ["-y", "jw-mcp"]
     }
   }
 }
 ```
 
-**Replace `/Users/<username>/jw-mcp` with your actual project path.**
+Restart Claude Desktop after saving.
+
+### Other MCP Clients (Cursor, Windsurf, etc.)
+
+Use the same npx command — consult your client's MCP documentation for where to add it:
+
+```bash
+npx -y jw-mcp
+```
+
+### Alternative: Install via Smithery
+
+To install via [Smithery](https://smithery.ai/server/@advenimus/jw-mcp), visit the page and click the install option for your client.
+
+---
+
+## Features
+
+This MCP server provides four main categories of tools:
+
+### Bible Scripture Tools
+- **`search_bible_books`**: Search for Bible books by name or abbreviation to find book numbers
+- **`get_bible_verse`**: Get plain Bible verse text from wol.jw.org
+- **`get_verse_with_study`**: Get comprehensive study content including verses, study notes, cross-references, and research articles. Supports verse ranges.
+- **`get_bible_verse_url`**: Generate JW.org URLs for Bible verses, ranges, or chapters. Perfect for adding clickable scripture links to markdown documents.
+
+### Christian Life and Ministry Workbook Tools
+- **`getWorkbookLinks`**: Get available workbook weeks for current or specific issue
+- **`getWorkbookContent`**: Download and parse RTF content to clean plain text (70% token reduction!)
+
+### Watchtower Study Tools
+- **`getWatchtowerLinks`**: Get available Watchtower articles for current or specific issue
+- **`getWatchtowerContent`**: Download and parse RTF content to clean plain text (70% token reduction!)
+
+### Video Caption Tools
+- **`get_jw_captions`**: Retrieves video metadata and subtitle content from JW.org by video ID
+
+### Smart Features
+- **Automatic Date Handling**: Workbook uses current month; Watchtower automatically calculates correct issue (2 months behind)
+- **RTF Parsing**: Automatically converts RTF files to clean, readable plain text with 70% token reduction
+- **Live Web Scraping**: Scripture tools fetch fresh content directly from wol.jw.org with no database required
+- **Verse-Specific Research**: Study articles are filtered to the exact verses you request, not the whole chapter
 
 ## Available Tools
 
