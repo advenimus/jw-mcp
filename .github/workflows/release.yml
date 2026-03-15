@@ -1,0 +1,74 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+
+      - run: npm ci
+
+      - name: Get version from tag
+        id: version
+        run: echo "version=${GITHUB_REF#refs/tags/v}" >> "$GITHUB_OUTPUT"
+
+      - name: Sync versions with tag
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          npm version "$VERSION" --no-git-tag-version --allow-same-version
+          node -e "
+            const fs = require('fs');
+            const m = JSON.parse(fs.readFileSync('manifest.json', 'utf8'));
+            m.version = '$VERSION';
+            fs.writeFileSync('manifest.json', JSON.stringify(m, null, 2) + '\n');
+          "
+
+      - name: Build MCPB bundle
+        run: npx @anthropic-ai/mcpb pack . jw-mcp.mcpb
+
+      - name: Publish to npm
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: jw-mcp.mcpb
+          body: |
+            ## Installation
+
+            ### Claude Desktop (one-click)
+            Download `jw-mcp.mcpb` below and open it — Claude Desktop will install the extension automatically.
+
+            ### Claude Code
+            ```bash
+            claude mcp add jw-mcp -- npx -y jw-mcp
+            ```
+
+            ### Manual Config
+            Add to your Claude Desktop config:
+            ```json
+            {
+              "mcpServers": {
+                "jw-mcp": {
+                  "command": "npx",
+                  "args": ["-y", "jw-mcp"]
+                }
+              }
+            }
+            ```

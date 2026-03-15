@@ -1,0 +1,15 @@
+assets/
+logs/
+.claude/
+.vscode/
+.github/
+.git/
+*.png
+*.jpg
+*.md
+*.yaml
+Dockerfile
+n8n_workflow.json
+claude_desktop_config_example.json
+IMAGE_PLACEHOLDERS.md
+smithery.yaml

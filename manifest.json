@@ -1,0 +1,61 @@
+{
+  "manifest_version": "0.3",
+  "name": "jw-mcp",
+  "version": "1.0.1",
+  "description": "MCP server for JW.org content: Bible scripture lookup with study content, workbook materials, Watchtower articles, and video captions",
+  "author": {
+    "name": "advenimus",
+    "url": "https://github.com/advenimus/jw-mcp"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/advenimus/jw-mcp.git"
+  },
+  "server": {
+    "type": "node",
+    "entry_point": "src/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": ["${__dirname}/src/index.js"]
+    }
+  },
+  "tools": [
+    {
+      "name": "search_bible_books",
+      "description": "Search for Bible books by name, abbreviation, or number"
+    },
+    {
+      "name": "get_bible_verse",
+      "description": "Get plain Bible verse text from wol.jw.org"
+    },
+    {
+      "name": "get_verse_with_study",
+      "description": "Get comprehensive study content for Bible verses including study notes, cross-references, and research articles"
+    },
+    {
+      "name": "get_bible_verse_url",
+      "description": "Generate JW.org URLs for Bible verses, ranges, or chapters"
+    },
+    {
+      "name": "getWorkbookLinks",
+      "description": "Get available Christian Life and Ministry workbook weeks"
+    },
+    {
+      "name": "getWorkbookContent",
+      "description": "Download and parse workbook content to clean plain text"
+    },
+    {
+      "name": "getWatchtowerLinks",
+      "description": "Get available Watchtower study articles"
+    },
+    {
+      "name": "getWatchtowerContent",
+      "description": "Download and parse Watchtower article content to clean plain text"
+    },
+    {
+      "name": "get_jw_captions",
+      "description": "Fetch video captions and metadata from JW.org"
+    }
+  ]
+}
