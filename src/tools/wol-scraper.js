@@ -29,7 +29,7 @@ export class WOLScraper {
     const url = `https://wol.jw.org/en/wol/b/r1/lp-e/nwtsty/${bookNum}/${chapterNum}#study=discover`;
 
     try {
-      console.log(`[scraper] Fetching ${url}`);
+      console.error(`[scraper] Fetching ${url}`);
       const fetchStart = Date.now();
       const response = await fetch(url, {
         headers: this.headers,
@@ -37,14 +37,14 @@ export class WOLScraper {
       });
 
       const fetchDuration = Date.now() - fetchStart;
-      console.log(`[scraper] Fetch response: ${response.status} ${response.statusText} in ${fetchDuration}ms`);
+      console.error(`[scraper] Fetch response: ${response.status} ${response.statusText} in ${fetchDuration}ms`);
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
       const html = await response.text();
-      console.log(`[scraper] HTML size: ${html.length} chars`);
+      console.error(`[scraper] HTML size: ${html.length} chars`);
       const $ = cheerio.load(html);
 
       // Extract chapter-level study data
@@ -71,7 +71,7 @@ export class WOLScraper {
       const verses = this.extractVerses($, bookNum, chapterNum);
 
       const totalDuration = Date.now() - fetchStart;
-      console.log(`[scraper] Parsed ${bookNum}:${chapterNum} — ${verses.length} verses, ${Object.keys(verseStudyNotes).length} study notes, ${Object.keys(verseStudyArticles).length} verse articles in ${totalDuration}ms`);
+      console.error(`[scraper] Parsed ${bookNum}:${chapterNum} — ${verses.length} verses, ${Object.keys(verseStudyNotes).length} study notes, ${Object.keys(verseStudyArticles).length} verse articles in ${totalDuration}ms`);
 
       return {
         chapter_study_data: chapterStudyData,
@@ -552,10 +552,10 @@ export class WOLScraper {
    * @returns {Promise<Object>} Verse object with text
    */
   async getSingleVerse(bookNum, chapterNum, verseNum) {
-    console.log(`[scraper] getSingleVerse(${bookNum}, ${chapterNum}, ${verseNum})`);
+    console.error(`[scraper] getSingleVerse(${bookNum}, ${chapterNum}, ${verseNum})`);
     const content = await this.extractChapterContent(bookNum, chapterNum);
 
-    console.log(`[scraper] Available verses: [${content.verses.map(v => v.verse_num).join(', ')}]`);
+    console.error(`[scraper] Available verses: [${content.verses.map(v => v.verse_num).join(', ')}]`);
     const verse = content.verses.find(v => v.verse_num === verseNum);
 
     if (!verse) {
@@ -563,7 +563,7 @@ export class WOLScraper {
       throw new Error(`Verse ${bookNum}:${chapterNum}:${verseNum} not found`);
     }
 
-    console.log(`[scraper] Found verse ${verseNum}: "${verse.verse_text.slice(0, 80)}..."`);
+    console.error(`[scraper] Found verse ${verseNum}: "${verse.verse_text.slice(0, 80)}..."`);
     return verse;
   }
 
@@ -576,7 +576,7 @@ export class WOLScraper {
    * @returns {Promise<Object>} Complete study content
    */
   async getVerseWithStudy(bookNum, chapterNum, verseInput, options = {}) {
-    console.log(`[scraper] getVerseWithStudy(${bookNum}, ${chapterNum}, ${verseInput}, ${JSON.stringify(options)})`);
+    console.error(`[scraper] getVerseWithStudy(${bookNum}, ${chapterNum}, ${verseInput}, ${JSON.stringify(options)})`);
     const {
       fields = ['verses', 'study_notes'],
       limit = null
