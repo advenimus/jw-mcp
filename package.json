@@ -1,6 +1,6 @@
 {
   "name": "jw-mcp",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "MCP server for JW.org content: Bible scripture lookup with study content, workbook materials, Watchtower articles, and video captions",
   "main": "src/index.js",
   "type": "module",
