@@ -1,0 +1,16 @@
+services:
+  jw-mcp:
+    image: ghcr.io/advenimus/jw-mcp:latest
+    # To build locally instead: comment out 'image' above and uncomment:
+    # build: .
+    container_name: jw-mcp
+    restart: unless-stopped
+    ports:
+      - "${MCP_PORT:-8080}:8080"
+    environment:
+      - MCP_TRANSPORT=http
+      - MCP_PORT=8080
+      - MCP_BASE_URL=${MCP_BASE_URL}
+      - MCP_AUTH_SECRET=${MCP_AUTH_SECRET}
+      - MCP_AUTH=${MCP_AUTH:-true}
+    env_file: .env

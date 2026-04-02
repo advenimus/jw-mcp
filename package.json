@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "start": "node src/index.js",
-    "start:http": "node src/http-server.js"
+    "start:http": "MCP_TRANSPORT=http node src/index.js"
   },
   "bin": {
     "jw-mcp": "./src/index.js"

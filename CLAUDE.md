@@ -4,25 +4,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Architecture Overview
 
-This is a **Model Context Protocol (MCP) server** that provides tools for accessing JW.org content. The server runs in two modes:
+This is a **Model Context Protocol (MCP) server** that provides tools for accessing JW.org content. The server has a single entry point (`src/index.js`) with two transport modes controlled by `MCP_TRANSPORT`:
 
-1. **stdio mode** (`src/index.js`) - For local Claude Desktop integration
-2. **HTTP mode** (`src/http-server.js`) - For Smithery deployment and web-based clients
-
-### Critical: Dual Server Architecture
-
-**IMPORTANT**: When adding new tools, you MUST update BOTH server files:
-- `src/index.js` (stdio server for local use)
-- `src/http-server.js` (HTTP server for Smithery)
-
-Smithery uses the HTTP server exclusively. If you only update `index.js`, the tool will work locally but NOT appear in Smithery.
+1. **stdio** (default) — For local Claude Desktop / Claude Code integration
+2. **http** — Docker/cloud deployment with OAuth 2.1 authentication
 
 ## Project Structure
 
 ```
 src/
-├── index.js              # stdio MCP server (local Claude Desktop)
-├── http-server.js        # HTTP MCP server (Smithery deployment)
+├── index.js              # Unified entry point (stdio + http modes)
+├── auth.js               # OAuth 2.1 provider (MCP_AUTH_SECRET gated)
 └── tools/
     ├── captions-tool.js      # Single tool example
     ├── scripture-tools.js    # Multiple tools (Bible lookup)
@@ -81,74 +73,56 @@ export async function handleScriptureTools(request) {
 
 Add your tool definition, implementation, and update the handler in the appropriate file under `src/tools/`.
 
-### Step 2: Update BOTH Server Files
+### Step 2: Register in `src/index.js`
 
-**This is critical for Smithery compatibility!**
+Import and add to the `allTools` array and `toolHandlers` array at the top of `index.js`. Only one file to update — both stdio and http modes share the same tool registration.
 
-#### In `src/index.js`:
 ```javascript
-// Import the new tool
-import {
-  existingTool,
-  newTool,  // ADD THIS
-  handleTools
-} from './tools/your-tools.js';
-
-// Add to allTools array
-const allTools = [
-  existingTool,
-  newTool  // ADD THIS
-];
-```
-
-#### In `src/http-server.js`:
-```javascript
-// SAME imports and registration as index.js
-import {
-  existingTool,
-  newTool,  // ADD THIS
-  handleTools
-} from './tools/your-tools.js';
+import { newTool, handleNewTools } from './tools/new-tools.js';
 
 const allTools = [
-  existingTool,
-  newTool  // ADD THIS
+  // ... existing tools
+  newTool,  // ADD THIS
+];
+
+const toolHandlers = [
+  // ... existing handlers
+  handleNewTools,  // ADD THIS
 ];
 ```
-
-### Step 3: Commit and Push
-
-After updating both files:
-```bash
-git add src/index.js src/http-server.js src/tools/your-tools.js
-git commit -m "Add new_tool to MCP server"
-git push
-```
-
-Smithery will automatically rebuild and pick up the new tool within a few minutes.
 
 ## Running the Server
 
 ### Local Development (stdio mode)
 ```bash
 npm start
-# or
-node src/index.js
 ```
 
-### HTTP Mode (for testing Smithery integration)
+### HTTP Mode with OAuth
 ```bash
-npm run start:http
-# or
-node src/http-server.js
+MCP_TRANSPORT=http MCP_AUTH_SECRET=my-secret MCP_BASE_URL=http://localhost:8080 npm run start:http
 ```
 
-The HTTP server runs on port 8081 by default. Health check: `http://localhost:8081/health`
+### Docker
+```bash
+docker compose up
+```
+Requires `.env` with `MCP_BASE_URL` and `MCP_AUTH_SECRET`.
 
 ## Key Technical Details
 
-### HTTP Server: Stateless Mode
-The HTTP server creates fresh `Server` and `Transport` instances for EVERY request. This is required for Smithery's distributed architecture where requests may hit different container instances.
+### Transport Modes
+
+**stdio mode** creates a single Server+Transport pair. **http mode** creates a new Server+Transport pair per session (SDK limitation: one transport per Server instance). The `createServer()` factory function is shared.
+
+### OAuth Authentication (`src/auth.js`)
+
+When `MCP_AUTH` is not `false` and `MCP_AUTH_SECRET` is set:
+- OAuth 2.1 + PKCE (S256) flow via MCP SDK's `mcpAuthRouter`
+- Login page at `/authorize` requires `MCP_AUTH_SECRET`
+- Timing-safe secret comparison via `node:crypto`
+- 24h access tokens, 30-day refresh tokens, 10-min auth codes
+- `requireBearerAuth` middleware protects `/mcp` endpoints
 
 ### RTF Parsing
 Tools that fetch RTF files (Workbook, Watchtower) use `rtf-parser.js` to convert RTF markup to clean plain text, achieving ~70% token reduction.
@@ -177,12 +151,17 @@ All tool implementations must return:
 
 For structured data, use `JSON.stringify(data, null, 2)` for pretty printing.
 
-## Smithery Deployment
+## Docker Deployment
 
-The server is deployed on Smithery at `@advenimus/jw-mcp`. Configuration is in `smithery.yaml`:
-- Runtime: container
-- Start command type: http
-- No configuration schema required
+Docker image published to `ghcr.io/advenimus/jw-mcp` on each release. Environment variables:
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `MCP_TRANSPORT` | No | `stdio` | Set to `http` for Docker |
+| `MCP_PORT` | No | `8080` | HTTP listen port |
+| `MCP_BASE_URL` | Yes (http) | — | Public HTTPS URL |
+| `MCP_AUTH` | No | `true` | Set `false` to disable OAuth |
+| `MCP_AUTH_SECRET` | Yes (http) | — | Access key (min 8 chars) |
 
 ## Language Support
 
