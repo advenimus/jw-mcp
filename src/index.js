@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { createRequire } from 'node:module';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import {
   CallToolRequestSchema,
@@ -14,6 +15,10 @@ import {
   getBibleVerseURLTool,
   handleScriptureTools
 } from './tools/scripture-tools.js';
+
+// Single source of truth for the version reported in the MCP handshake.
+// createRequire (not a JSON import attribute) keeps this working on Node 18.
+const { version: SERVER_VERSION } = createRequire(import.meta.url)('../package.json');
 
 // All tools and handlers shared across transport modes
 const allTools = [
@@ -39,7 +44,7 @@ const toolHandlers = [
  */
 function createServer(requestId = 'default') {
   const server = new Server(
-    { name: 'jw-mcp', version: '1.0.2' },
+    { name: 'jw-mcp', version: SERVER_VERSION },
     { capabilities: { tools: {} } }
   );
 

@@ -1,4 +1,4 @@
-import fetch from 'node-fetch';
+import { fetchWithTimeout } from './fetch-with-timeout.js';
 
 // Tool definition
 export const captionsTool = {
@@ -63,7 +63,7 @@ export async function getCaptionsImplementation(video_id) {
     
     // Step 1: Get JSON data for JW video
     const mediaUrl = `https://b.jw-cdn.org/apis/mediator/v1/media-items/E/${extractedVideoId}?clientType=www`;
-    const mediaResponse = await fetch(mediaUrl);
+    const mediaResponse = await fetchWithTimeout(mediaUrl);
     
     if (!mediaResponse.ok) {
       return {
@@ -112,7 +112,7 @@ export async function getCaptionsImplementation(video_id) {
     }
 
     // Step 2: Get subtitles from JW.org
-    const subtitlesResponse = await fetch(subtitlesUrl);
+    const subtitlesResponse = await fetchWithTimeout(subtitlesUrl);
     
     if (!subtitlesResponse.ok) {
       return {

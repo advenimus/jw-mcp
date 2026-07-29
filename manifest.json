@@ -1,7 +1,7 @@
 {
   "manifest_version": "0.3",
   "name": "jw-mcp",
-  "version": "1.0.2",
+  "version": "1.2.1",
   "description": "MCP server for JW.org content: Bible scripture lookup with study content, workbook materials, Watchtower articles, and video captions",
   "author": {
     "name": "advenimus",
@@ -17,7 +17,9 @@
     "entry_point": "src/index.js",
     "mcp_config": {
       "command": "node",
-      "args": ["${__dirname}/src/index.js"]
+      "args": [
+        "${__dirname}/src/index.js"
+      ]
     }
   },
   "tools": [

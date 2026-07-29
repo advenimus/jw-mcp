@@ -154,8 +154,9 @@ export function searchBooks(query, limit = 10) {
 
   const normalizedQuery = query.toLowerCase().trim();
 
-  // If query is a number, return exact match
-  const asNumber = parseInt(normalizedQuery);
+  // Only a bare number is a book-number lookup. parseInt() alone would read
+  // "1 john" as 1 and wrongly short-circuit to Genesis.
+  const asNumber = /^\d+$/.test(normalizedQuery) ? parseInt(normalizedQuery) : NaN;
   if (!isNaN(asNumber) && asNumber >= 1 && asNumber <= 66) {
     return [{
       number: asNumber,

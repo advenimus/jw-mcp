@@ -1,4 +1,4 @@
-import fetch from 'node-fetch';
+import { fetchWithTimeout } from './fetch-with-timeout.js';
 
 /**
  * Get current issue in YYYYMM00 format
@@ -31,8 +31,8 @@ export function getCurrentWatchtowerIssue() {
  */
 export async function downloadRtfContent(url) {
   try {
-    const response = await fetch(url);
-    
+    const response = await fetchWithTimeout(url);
+
     if (!response.ok) {
       throw new Error(`Failed to fetch RTF content: ${response.statusText}`);
     }
@@ -61,8 +61,8 @@ export async function fetchPublicationData(pub, langwritten = 'E', issue = null,
     
     const apiUrl = `https://b.jw-cdn.org/apis/pub-media/GETPUBMEDIALINKS?pub=${pub}&langwritten=${langwritten}&issue=${finalIssue}&fileformat=${fileformat}&output=json`;
     
-    const response = await fetch(apiUrl);
-    
+    const response = await fetchWithTimeout(apiUrl);
+
     if (!response.ok) {
       throw new Error(`API request failed: ${response.statusText}`);
     }

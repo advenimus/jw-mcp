@@ -4,8 +4,8 @@
  * Ported from Python scraper in wol-api
  */
 
-import fetch from 'node-fetch';
 import * as cheerio from 'cheerio';
+import { fetchWithTimeout } from './fetch-with-timeout.js';
 import { getBookName } from './bible-books.js';
 
 /**
@@ -13,9 +13,14 @@ import { getBookName } from './bible-books.js';
  */
 export class WOLScraper {
   constructor() {
-    // User-Agent to avoid blocking
+    // wol.jw.org (Akamai) stalls indefinitely on requests that send a browser
+    // User-Agent without Accept-Language. That header is the one verified to
+    // unblock it (3/3 hangs without, 3/3 sub-100ms with); Accept is sent
+    // alongside to match a real browser. Do not drop Accept-Language.
     this.headers = {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      'Accept-Language': 'en-US,en;q=0.9'
     };
   }
 
@@ -31,10 +36,7 @@ export class WOLScraper {
     try {
       console.error(`[scraper] Fetching ${url}`);
       const fetchStart = Date.now();
-      const response = await fetch(url, {
-        headers: this.headers,
-        timeout: 30000
-      });
+      const response = await fetchWithTimeout(url, { headers: this.headers });
 
       const fetchDuration = Date.now() - fetchStart;
       console.error(`[scraper] Fetch response: ${response.status} ${response.statusText} in ${fetchDuration}ms`);
@@ -113,12 +115,9 @@ export class WOLScraper {
             // Get verse text
             const verseText = $(elem).text().trim();
 
-            // Get book name
-            const bookName = this.extractBookName($, bookNum);
-
             verses.push({
               book_num: bookNum,
-              book_name: bookName,
+              book_name: getBookName(bookNum),
               chapter: chapterNum,
               verse_num: vVerse,
               verse_text: verseText
@@ -131,29 +130,6 @@ export class WOLScraper {
     });
 
     return verses;
-  }
-
-  /**
-   * Extract book name from the page
-   * @param {CheerioAPI} $ - Cheerio instance
-   * @param {number} bookNum - Book number (fallback)
-   * @returns {string} Book name
-   */
-  extractBookName($, bookNum) {
-    // Try to extract from page title
-    const title = $('title').text();
-    if (title) {
-      // Extract book name from title (usually first part before chapter)
-      if (title.includes('—')) {
-        return title.split('—')[0].trim();
-      } else if (title.includes(' ')) {
-        // Fallback: take first word as book name
-        return title.split(' ')[0];
-      }
-    }
-
-    // Fallback: use our bible-books mapping
-    return getBookName(bookNum) || 'Unknown';
   }
 
   /**
