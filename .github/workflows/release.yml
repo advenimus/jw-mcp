@@ -22,7 +22,6 @@ jobs:
         with:
           node-version: '22'
           registry-url: 'https://registry.npmjs.org'
-          package-manager-cache: false
 
       # Trusted publishing needs npm >= 11.5.1; Node 22 ships npm 10. Pinned to
       # the 11.x line because npm@latest (12.x) requires a newer Node than 22.
