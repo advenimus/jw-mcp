@@ -8,6 +8,7 @@ on:
 permissions:
   contents: write
   packages: write
+  id-token: write # required for npm trusted publishing (OIDC)
 
 jobs:
   release:
@@ -19,8 +20,12 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22.14'
           registry-url: 'https://registry.npmjs.org'
+          package-manager-cache: false
+
+      # Trusted publishing needs npm >= 11.5.1; Node 22 ships npm 10.
+      - run: npm install -g npm@latest
 
       - run: npm ci
 
@@ -42,10 +47,11 @@ jobs:
       - name: Build MCPB bundle
         run: npx @anthropic-ai/mcpb pack . jw-mcp.mcpb
 
+      # Authenticates via OIDC (id-token: write) — no NPM_TOKEN secret needed.
+      # Requires a trusted publisher configured for this package on npmjs.com
+      # pointing at this repo and this workflow filename.
       - name: Publish to npm
         run: npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
