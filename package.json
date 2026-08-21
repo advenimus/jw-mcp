@@ -1,12 +1,15 @@
 {
   "name": "jw-mcp",
-  "version": "1.2.3",
+  "version": "1.3.0",
   "description": "MCP server for JW.org content: Bible scripture lookup with study content, workbook materials, Watchtower articles, and video captions",
   "main": "src/index.js",
   "type": "module",
   "scripts": {
     "start": "node src/index.js",
-    "start:http": "MCP_TRANSPORT=http node src/index.js"
+    "start:http": "MCP_TRANSPORT=http node src/index.js",
+    "test": "node --test tests/auth/*.test.js tests/http-oauth.test.js",
+    "test:coverage": "c8 --include=src/auth/** --include=src/auth.js --include=src/http-server.js --check-coverage --lines 80 --functions 80 --statements 80 --branches 70 node --test tests/auth/*.test.js tests/http-oauth.test.js",
+    "test:docker": "bash tests/docker-smoke.sh"
   },
   "bin": {
     "jw-mcp": "./src/index.js"
@@ -36,13 +39,16 @@
     "node": ">=18.0.0"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.21.1",
+    "@modelcontextprotocol/sdk": "^1.30.0",
     "cheerio": "^1.1.2",
+    "cors": "^2.8.5",
+    "express": "^4.22.2",
+    "express-rate-limit": "^7.5.1",
     "node-fetch": "^3.3.2",
-    "express": "^4.18.2",
-    "cors": "^2.8.5"
+    "undici": "^7.29.0"
   },
   "devDependencies": {
-    "@types/node": "^20.0.0"
+    "@types/node": "^20.0.0",
+    "c8": "^12.0.0"
   }
 }

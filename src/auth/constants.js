@@ -1,0 +1,10 @@
+export const MIN_SECRET_LENGTH = 16;
+export const ACCESS_TOKEN_LIFETIME_MS = 24 * 60 * 60 * 1000;
+export const REFRESH_TOKEN_LIFETIME_MS = 30 * 24 * 60 * 60 * 1000;
+export const AUTH_CODE_LIFETIME_MS = 10 * 60 * 1000;
+export const PENDING_AUTH_LIFETIME_MS = 10 * 60 * 1000;
+export const MCP_SCOPE = 'mcp:tools';
+export const CIMD_FETCH_TIMEOUT_MS = 3000;
+export const CIMD_MAX_BYTES = 64 * 1024;
+export const CIMD_REVALIDATE_MS = 24 * 60 * 60 * 1000;
+export const RESOURCE_NAME = 'JW MCP';

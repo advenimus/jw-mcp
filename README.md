@@ -38,6 +38,43 @@ npx -y jw-mcp
 
 ---
 
+## Docker (self-hosted)
+
+Run this server on a machine with a public HTTPS URL, then paste that URL into Grok, Claude.ai, or ChatGPT as a custom connector.
+
+Compose binds the container to loopback only (`127.0.0.1:8080`). Do not publish port 8080 on the public internet. Put a reverse proxy on the host, terminate TLS there, and proxy to `127.0.0.1:8080`.
+
+1. Copy `.env.example` to `.env`.
+2. Set `MCP_BASE_URL` to your public origin, with no path. Example: `https://jw-mcp.example.com`.
+3. Set `MCP_AUTH_SECRET` to a long access key (at least 16 characters).
+4. Keep `MCP_AUTH=true`. HTTP mode with auth off is loopback-only. Do not disable auth in Docker.
+5. Set `MCP_TRUST_PROXY=true` only when the reverse proxy overwrites `X-Forwarded-For`. Leave it unset otherwise.
+6. Start it:
+
+```bash
+docker compose up --build -d
+```
+
+The connector URL is:
+
+```
+https://your-host/mcp
+```
+
+When you add the connector, the AI site opens a login page. Type the same access key you put in `MCP_AUTH_SECRET`.
+
+| Client | Where to add it |
+|---|---|
+| Grok | [grok.com/connectors](https://grok.com/connectors) → New Connector → Custom |
+| Claude.ai | Customize → Connectors → Add custom connector |
+| ChatGPT | Settings → enable Developer mode → add the server URL |
+
+Local HTTP (`http://localhost:8080`) is fine for testing because compose binds loopback. Claude, ChatGPT, and Grok must reach a public HTTPS URL. A tunnel such as ngrok or Cloudflare Tunnel can expose that loopback port for a live click-test. Do not publish `8080` on `0.0.0.0`.
+
+Auth codes, clients, and tokens are stored in the `jw-mcp-auth` Docker volume so a container restart does not drop every connection.
+
+---
+
 ## Tools
 
 All tools support multiple languages via the `langwritten` parameter (`E` = English, `S` = Spanish, `F` = French, etc.).
@@ -151,6 +188,7 @@ Also accepts full JW.org URLs — the video ID is extracted automatically.
 ```bash
 npm start          # stdio mode (local)
 npm run start:http # HTTP mode (testing)
+npm test           # OAuth + HTTP connector tests
 ```
 
 Built with Node.js, MCP SDK, node-fetch, and cheerio.
