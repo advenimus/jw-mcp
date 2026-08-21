@@ -78,6 +78,24 @@ describe('McpOAuthProvider', () => {
     assert.equal(redirect.searchParams.get('state'), 'state-123');
   });
 
+  it('lets the browser follow the OAuth redirect after login', async () => {
+    const provider = createProvider();
+    const login = mockRes();
+    await provider.authorize(testClient(), authParams(), login);
+    assert.match(
+      login.headers['Content-Security-Policy'],
+      /form-action 'self' http:\/\/localhost:9999(?:;|$)/
+    );
+
+    const callback = mockRes();
+    await provider.handleAuthCallback(pendingIdFromLoginHtml(login.body), SECRET, callback);
+    assert.equal(callback.statusCode, 302);
+    assert.match(
+      callback.headers['Content-Security-Policy'],
+      /form-action 'self' http:\/\/localhost:9999(?:;|$)/
+    );
+  });
+
   it('rejects pending auths older than 10 minutes on callback', async () => {
     let now = Date.now();
     const provider = createProvider({ now: () => now });
