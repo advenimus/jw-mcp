@@ -3,10 +3,10 @@ import http from 'node:http';
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHttpApp } from '../src/http-server.js';
+import { DEFAULT_CONTENT_SECURITY_POLICY as CSP } from '../src/auth/csp.js';
 import { completeOAuthHandshake, mcpRpc } from './handshake.js';
 
 const SECRET = 'test-secret-value';
-const CSP = "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'";
 
 function getFreePort() {
   return new Promise((resolve, reject) => {
@@ -142,6 +142,37 @@ describe('HTTP OAuth MCP server', () => {
     const response = await fetch(`${origin}/authorize`);
     assertSecurityHeaders(response.headers);
     assert.equal(response.headers.get('x-frame-options'), 'DENY');
+  });
+
+  it('allows the client redirect origin in login page CSP', async () => {
+    const redirectUri = `${origin}/oauth/callback`;
+    const registerResponse = await fetch(`${origin}/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        client_name: 'csp-test',
+        redirect_uris: [redirectUri],
+        token_endpoint_auth_method: 'none',
+        grant_types: ['authorization_code', 'refresh_token'],
+        response_types: ['code'],
+      }),
+    });
+    assert.equal(registerResponse.ok, true);
+    const client = await registerResponse.json();
+
+    const authorizeUrl = new URL('/authorize', origin);
+    authorizeUrl.searchParams.set('response_type', 'code');
+    authorizeUrl.searchParams.set('client_id', client.client_id);
+    authorizeUrl.searchParams.set('redirect_uri', redirectUri);
+    authorizeUrl.searchParams.set('code_challenge', 'A'.repeat(43));
+    authorizeUrl.searchParams.set('code_challenge_method', 'S256');
+    authorizeUrl.searchParams.set('resource', mcpUrl);
+
+    const loginResponse = await fetch(authorizeUrl);
+    assert.equal(loginResponse.status, 200);
+    const csp = loginResponse.headers.get('content-security-policy') || '';
+    assert.match(csp, /default-src 'none'/);
+    assert.match(csp, new RegExp(`form-action 'self' ${origin.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:;|$)`));
   });
 
   it('rate-limits /authorize before CIMD lookup', async () => {

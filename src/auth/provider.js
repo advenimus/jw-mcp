@@ -13,6 +13,7 @@ import {
   REFRESH_TOKEN_LIFETIME_MS,
 } from './constants.js';
 import { fetchClientIdMetadata, isHttpsClientId } from './cimd.js';
+import { contentSecurityPolicy } from './csp.js';
 import { renderDeniedPage, renderLoginPage } from './login-page.js';
 import { safeCompare } from './safe-compare.js';
 import { createAuthState, InMemoryClientsStore, TokenStore } from './store.js';
@@ -135,6 +136,7 @@ export class McpOAuthProvider {
     }
 
     res.setHeader('Content-Type', 'text/html');
+    res.setHeader('Content-Security-Policy', contentSecurityPolicy(params.redirectUri));
     res.send(renderLoginPage({
       pendingId,
       clientName: client.client_name || client.client_id,
@@ -170,6 +172,7 @@ export class McpOAuthProvider {
       redirectUrl.searchParams.set('state', pending.params.state);
     }
 
+    res.setHeader('Content-Security-Policy', contentSecurityPolicy(pending.params.redirectUri));
     res.redirect(redirectUrl.toString());
   }
 

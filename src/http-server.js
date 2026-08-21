@@ -16,6 +16,7 @@ import {
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { isInitializeRequest } from '@modelcontextprotocol/sdk/types.js';
 import { McpOAuthProvider, MCP_SCOPE, RESOURCE_NAME } from './auth.js';
+import { DEFAULT_CONTENT_SECURITY_POLICY } from './auth/csp.js';
 import { mcpResourceUrl, originUrl as toOriginUrl } from './auth/urls.js';
 import { createMcpServer } from './mcp-server.js';
 
@@ -26,8 +27,7 @@ const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
 const AUTHORIZE_RATE_MAX = 100;
 const CALLBACK_RATE_MAX = 20;
 const SWEEP_INTERVAL_MAX_MS = 60 * 1000;
-const CONTENT_SECURITY_POLICY =
-  "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'";
+const CONTENT_SECURITY_POLICY = DEFAULT_CONTENT_SECURITY_POLICY;
 
 function isLoopbackHostname(hostname) {
   const host = String(hostname || '').replace(/^\[|\]$/g, '').toLowerCase();
