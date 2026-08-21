@@ -1,7 +1,7 @@
-FROM node:22-alpine@sha256:c610fcdfb1d5b4740dd70c284ed3cb16bb857e0f7166196e36a5501df7a3aa32
+FROM node:22-bookworm-slim@sha256:d649c27dae7ba0137b3cef5dd75baa422c08dc3d9e3fc0c23dfb172dc3cc6436
 
-RUN addgroup -g 1001 -S appuser && \
-    adduser -S appuser -u 1001 -G appuser && \
+RUN groupadd --system --gid 1001 appuser && \
+    useradd --system --uid 1001 --gid appuser --home /nonexistent --shell /usr/sbin/nologin appuser && \
     mkdir -p /data && \
     chown appuser:appuser /data
 
