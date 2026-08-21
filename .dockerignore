@@ -1,11 +1,14 @@
 node_modules
+.git
+.github
+assets
+scripts
+tests
 *.mcpb
-logs/
 .env
 .env.*
 !.env.example
-coverage
-.nyc_output
 auth.json
 auth.json.*.tmp
 **/auth.json
+*.md

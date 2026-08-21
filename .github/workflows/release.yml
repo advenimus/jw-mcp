@@ -5,20 +5,18 @@ on:
     tags:
       - 'v*'
 
-permissions:
-  contents: write
-  packages: write
-  id-token: write # required for npm trusted publishing (OIDC)
-
 jobs:
   release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write # required for npm trusted publishing (OIDC)
     outputs:
       version: ${{ steps.version.outputs.version }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: '22'
           registry-url: 'https://registry.npmjs.org'
@@ -29,7 +27,7 @@ jobs:
       # the 11.x line because npm@latest (12.x) requires a newer Node than 22.
       - run: npm install -g npm@^11.5.1
 
-      - run: npm ci
+      - run: npm ci --ignore-scripts
 
       - name: Get version from tag
         id: version
@@ -47,7 +45,7 @@ jobs:
           "
 
       - name: Build MCPB bundle
-        run: npx @anthropic-ai/mcpb pack . jw-mcp.mcpb
+        run: npx --yes @anthropic-ai/mcpb@2.1.2 pack . jw-mcp.mcpb
 
       # Authenticates via OIDC (id-token: write) — no NPM_TOKEN secret needed.
       # Requires a trusted publisher configured for this package on npmjs.com
@@ -56,7 +54,7 @@ jobs:
         run: npm publish
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v3
+        uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3.0.2
         with:
           generate_release_notes: true
           files: jw-mcp.mcpb
@@ -93,21 +91,24 @@ jobs:
   docker:
     needs: release
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       # Required to build the linux/arm64 image on an amd64 runner.
-      - uses: docker/setup-qemu-action@v4
+      - uses: docker/setup-qemu-action@96fe6ef7f33517b61c61be40b68a1882f3264fb8 # v4.2.0
 
-      - uses: docker/setup-buildx-action@v4
+      - uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
 
-      - uses: docker/login-action@v4
+      - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: docker/build-push-action@v7
+      - uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
         with:
           context: .
           platforms: linux/amd64,linux/arm64

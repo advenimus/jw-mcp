@@ -14,7 +14,10 @@ This is a **Model Context Protocol (MCP) server** that provides tools for access
 ```
 src/
 ├── index.js              # Unified entry point (stdio + http modes)
-├── auth.js               # OAuth 2.1 provider (MCP_AUTH_SECRET gated)
+├── mcp-server.js         # Shared MCP Server factory
+├── http-server.js        # Express + OAuth + Streamable HTTP
+├── auth.js               # OAuth 2.1 provider exports
+├── auth/                 # Login page, CIMD, token store
 └── tools/
     ├── captions-tool.js      # Single tool example
     ├── scripture-tools.js    # Multiple tools (Bible lookup)
@@ -73,9 +76,9 @@ export async function handleScriptureTools(request) {
 
 Add your tool definition, implementation, and update the handler in the appropriate file under `src/tools/`.
 
-### Step 2: Register in `src/index.js`
+### Step 2: Register in `src/mcp-server.js`
 
-Import and add to the `allTools` array and `toolHandlers` array at the top of `index.js`. Only one file to update — both stdio and http modes share the same tool registration.
+Import and add to the `allTools` array and `toolHandlers` array. Both stdio and http modes share this file.
 
 ```javascript
 import { newTool, handleNewTools } from './tools/new-tools.js';
@@ -100,29 +103,33 @@ npm start
 
 ### HTTP Mode with OAuth
 ```bash
-MCP_TRANSPORT=http MCP_AUTH_SECRET=my-secret MCP_BASE_URL=http://localhost:8080 npm run start:http
+MCP_TRANSPORT=http MCP_AUTH_SECRET=change-me-16chars MCP_BASE_URL=http://localhost:8080 npm run start:http
 ```
+
+HTTP mode with auth off (`MCP_AUTH=false`) is loopback-only. Do not disable auth in Docker.
 
 ### Docker
 ```bash
 docker compose up
 ```
-Requires `.env` with `MCP_BASE_URL` and `MCP_AUTH_SECRET`.
+Requires `.env` with `MCP_BASE_URL` and `MCP_AUTH_SECRET` (at least 16 characters). Compose binds `127.0.0.1:8080`. Put a TLS reverse proxy on the host and proxy to that loopback port. Do not publish 8080 publicly. Do not set `MCP_AUTH=false` in Docker.
 
 ## Key Technical Details
 
 ### Transport Modes
 
-**stdio mode** creates a single Server+Transport pair. **http mode** creates a new Server+Transport pair per session (SDK limitation: one transport per Server instance). The `createServer()` factory function is shared.
+**stdio mode** creates a single Server+Transport pair. **http mode** creates a new Server+Transport pair per session (SDK limitation: one transport per Server instance). The `createMcpServer()` factory function is shared.
 
 ### OAuth Authentication (`src/auth.js`)
 
 When `MCP_AUTH` is not `false` and `MCP_AUTH_SECRET` is set:
-- OAuth 2.1 + PKCE (S256) flow via MCP SDK's `mcpAuthRouter`
+- OAuth 2.1 + PKCE (S256) via the MCP SDK, plus CIMD for ChatGPT/Claude
 - Login page at `/authorize` requires `MCP_AUTH_SECRET`
 - Timing-safe secret comparison via `node:crypto`
-- 24h access tokens, 30-day refresh tokens, 10-min auth codes
+- 24h access tokens, rotating 30-day refresh tokens, 10-min auth codes
+- Protected resource URL is `{MCP_BASE_URL}/mcp`
 - `requireBearerAuth` middleware protects `/mcp` endpoints
+- Optional file store at `AUTH_STORE_PATH` (Docker default `/data/auth.json`)
 
 ### RTF Parsing
 Tools that fetch RTF files (Workbook, Watchtower) use `rtf-parser.js` to convert RTF markup to clean plain text, achieving ~70% token reduction.
@@ -159,9 +166,11 @@ Docker image published to `ghcr.io/advenimus/jw-mcp` on each release. Environmen
 |----------|----------|---------|-------------|
 | `MCP_TRANSPORT` | No | `stdio` | Set to `http` for Docker |
 | `MCP_PORT` | No | `8080` | HTTP listen port |
-| `MCP_BASE_URL` | Yes (http) | — | Public HTTPS URL |
-| `MCP_AUTH` | No | `true` | Set `false` to disable OAuth |
-| `MCP_AUTH_SECRET` | Yes (http) | — | Access key (min 8 chars) |
+| `MCP_BASE_URL` | Yes (http) | — | Public origin, no path (`https://jw-mcp.example.com`) |
+| `MCP_AUTH` | No | `true` | Leave `true`. HTTP with auth off is loopback-only. Do not disable auth in Docker. |
+| `MCP_AUTH_SECRET` | Yes (http) | — | Access key (min 16 chars) |
+| `MCP_TRUST_PROXY` | No | unset | Set `true` only when the reverse proxy overwrites `X-Forwarded-For` |
+| `AUTH_STORE_PATH` | No | `/data/auth.json` in Docker | File store for clients and tokens |
 
 ## Language Support
 
