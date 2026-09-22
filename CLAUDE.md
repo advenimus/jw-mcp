@@ -166,11 +166,12 @@ Docker image published to `ghcr.io/advenimus/jw-mcp` on each release. Environmen
 |----------|----------|---------|-------------|
 | `MCP_TRANSPORT` | No | `stdio` | Set to `http` for Docker |
 | `MCP_PORT` | No | `8080` | HTTP listen port |
-| `MCP_BASE_URL` | Yes (http) | — | Public origin, no path (`https://jw-mcp.example.com`) |
+| `MCP_BASE_URL` | Yes (http) | — | Public origin, no path, no port (`https://jw-mcp.example.com`). Claude.ai only connects on 443. |
 | `MCP_AUTH` | No | `true` | Leave `true`. HTTP with auth off is loopback-only. Do not disable auth in Docker. |
 | `MCP_AUTH_SECRET` | Yes (http) | — | Access key (min 16 chars) |
-| `MCP_TRUST_PROXY` | No | unset | Set `true` only when the reverse proxy overwrites `X-Forwarded-For` |
+| `MCP_TRUST_PROXY` | No | unset | Set `true` only when exactly one proxy (Caddy, nginx, Cloudflare Tunnel) sets or appends the client IP in `X-Forwarded-For`. Trusts one hop. |
 | `AUTH_STORE_PATH` | No | `/data/auth.json` in Docker | File store for clients and tokens |
+| `CLOUDFLARE_TUNNEL_TOKEN` | No | — | Token for the optional `cloudflared` compose service (`--profile tunnel`) |
 
 ## Language Support
 
