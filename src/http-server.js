@@ -17,7 +17,12 @@ import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/
 import { isInitializeRequest } from '@modelcontextprotocol/sdk/types.js';
 import { McpOAuthProvider, MCP_SCOPE, RESOURCE_NAME } from './auth.js';
 import { DEFAULT_CONTENT_SECURITY_POLICY } from './auth/csp.js';
-import { mcpResourceUrl, originUrl as toOriginUrl } from './auth/urls.js';
+import {
+  connectorPortWarning,
+  isLoopbackHostname,
+  mcpResourceUrl,
+  originUrl as toOriginUrl,
+} from './auth/urls.js';
 import { createMcpServer } from './mcp-server.js';
 
 const MAX_SESSIONS = 100;
@@ -28,11 +33,6 @@ const AUTHORIZE_RATE_MAX = 100;
 const CALLBACK_RATE_MAX = 20;
 const SWEEP_INTERVAL_MAX_MS = 60 * 1000;
 const CONTENT_SECURITY_POLICY = DEFAULT_CONTENT_SECURITY_POLICY;
-
-function isLoopbackHostname(hostname) {
-  const host = String(hostname || '').replace(/^\[|\]$/g, '').toLowerCase();
-  return host === 'localhost' || host === '127.0.0.1' || host === '::1';
-}
 
 function assertHttpBaseUrl(baseUrl, useAuth) {
   if (!baseUrl || !String(baseUrl).trim()) {
@@ -416,6 +416,11 @@ export function startHttpServer(env = process.env) {
   }
 
   const { app, sessions, issuerUrl, mcpUrl, stop } = httpApp;
+
+  const portWarning = connectorPortWarning(baseUrl);
+  if (portWarning) {
+    console.error(`WARNING: ${portWarning}`);
+  }
 
   const interval = setInterval(() => {
     const count = Object.keys(sessions).length;

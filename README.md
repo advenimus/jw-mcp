@@ -44,11 +44,13 @@ Run this server on a machine with a public HTTPS URL, then paste that URL into G
 
 Compose binds the container to loopback only (`127.0.0.1:8080`). Do not publish port 8080 on the public internet. Put a reverse proxy on the host, terminate TLS there, and proxy to `127.0.0.1:8080`.
 
+> **Use port 443.** Claude.ai never connects to a custom connector on any other port. It only says "Couldn't reach the MCP server". Grok accepts other ports, so a URL like `https://host:18443/mcp` can work in Grok and still fail in Claude. The server logs a warning at startup when `MCP_BASE_URL` has a port.
+
 1. Copy `.env.example` to `.env`.
-2. Set `MCP_BASE_URL` to your public origin, with no path. Example: `https://jw-mcp.example.com`.
+2. Set `MCP_BASE_URL` to your public origin, with no path and no port. Example: `https://jw-mcp.example.com`.
 3. Set `MCP_AUTH_SECRET` to a long access key (at least 16 characters).
 4. Keep `MCP_AUTH=true`. HTTP mode with auth off is loopback-only. Do not disable auth in Docker.
-5. Set `MCP_TRUST_PROXY=true` only when the reverse proxy overwrites `X-Forwarded-For`. Leave it unset otherwise.
+5. Set `MCP_TRUST_PROXY=true` only when exactly one proxy sits in front of the server and sets or appends the real client IP in `X-Forwarded-For` (Caddy, nginx, or a Cloudflare Tunnel). Leave it unset otherwise.
 6. Start it:
 
 ```bash
@@ -72,6 +74,37 @@ When you add the connector, the AI site opens a login page. Type the same access
 Local HTTP (`http://localhost:8080`) is fine for testing because compose binds loopback. Claude, ChatGPT, and Grok must reach a public HTTPS URL. A tunnel such as ngrok or Cloudflare Tunnel can expose that loopback port for a live click-test. Do not publish `8080` on `0.0.0.0`.
 
 Auth codes, clients, and tokens are stored in the `jw-mcp-auth` Docker volume so a container restart does not drop every connection.
+
+### Home hosting with Cloudflare Tunnel
+
+Use this when the server runs on a home or office network. The tunnel makes an outbound-only connection to Cloudflare, so you open no router ports and your home IP stays out of DNS. Requests to jw.org still leave from your own network. Your domain's DNS must be on Cloudflare.
+
+1. In Cloudflare, go to **Zero Trust → Networks → Tunnels** and create a tunnel (type **Cloudflared**). Copy its token.
+2. In the tunnel's **Public hostname** tab, add your hostname (for example `jw-mcp.example.com`) with service `http://jw-mcp:8080`. If a DNS record for that name already exists, delete it first.
+3. In `.env`, set:
+
+   ```bash
+   MCP_BASE_URL=https://jw-mcp.example.com
+   MCP_TRUST_PROXY=true
+   CLOUDFLARE_TUNNEL_TOKEN=<token from step 1>
+   ```
+
+4. Start both containers:
+
+   ```bash
+   docker compose --profile tunnel up --build -d
+   ```
+
+5. Remove any old router port forward or reverse-proxy site for this server. Nothing needs to reach it from the internet directly.
+
+If the tunnel doesn't come up, run `docker compose logs cloudflared`. A missing or wrong `CLOUDFLARE_TUNNEL_TOKEN` makes it restart over and over.
+
+Cloudflare settings that can block AI connectors. Check them for this hostname:
+
+- **Security → Bots:** keep Bot Fight Mode off. On the free plan it can't be skipped for one hostname, and it can challenge server-to-server calls from Claude and Grok.
+- **AI Crawl Control / Block AI bots:** don't block Claude or Grok user agents on this hostname.
+- **Cloudflare Access:** don't put an Access login in front of this hostname. Claude's servers can't pass it. The server's own access key already protects it.
+- If you use WAF rules, allow Anthropic's outbound range `160.79.104.0/21`.
 
 ---
 
