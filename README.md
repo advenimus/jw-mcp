@@ -1,5 +1,4 @@
 # JW MCP Server
-[![smithery badge](https://smithery.ai/badge/@advenimus/jw-mcp)](https://smithery.ai/server/@advenimus/jw-mcp)
 
 An MCP (Model Context Protocol) server that provides tools for working with JW.org content, including workbook materials, Watchtower articles, and video captions.
 
@@ -22,27 +21,16 @@ This MCP server provides three main categories of tools:
 ### 🎥 **Video Caption Tools**
 - **`get_jw_captions`**: Retrieves video metadata and subtitle content from JW.org by video ID
 
-![Video Captions Demo](assets/images/get-video-captions.png)
+![Video Captions Tool Demo](assets/images/get-wt-info.png)
 
 ### ⚡ **Smart Date Handling**
 All tools automatically handle current dates:
 - **Workbook tools**: Use current month (May 2025)
 - **Watchtower tools**: Use issue from 2 months ago (March 2025) since Watchtower studies are published 2 months ahead
 
-# Quick Start
+## Quick Start
 
-## Installation
-
-### Installing via Smithery (Recommended)
-
-To install jw-mcp for Claude Desktop automatically via [Smithery](https://smithery.ai/server/@advenimus/jw-mcp):
-
-On this page, click the relevant install option for your client
-![Smithery Install](assets/images/smithery-intall.png)
-
-
-## Manual Local Install
-
+### Installation
 1. Clone this repository
 2. Install dependencies:
    ```bash
@@ -50,7 +38,7 @@ On this page, click the relevant install option for your client
    ```
 
 ### Claude Desktop Setup
-If cloned manually to a folder on your system, update your Claude Desktop config (`~/Library/Application Support/Claude/claude_desktop_config.json`):
+Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_desktop_config.json`):
 
 ```json
 {
