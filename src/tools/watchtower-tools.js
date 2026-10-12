@@ -6,7 +6,7 @@ import { parseRTF } from './rtf-parser.js';
  */
 export async function getWatchtowerLinks(pub = 'w', langwritten = 'E', issue = null, fileformat = 'RTF') {
   try {
-    // Use current Watchtower issue (2 months behind) if none provided
+    // Default: the issue that holds this week's study article (2 months behind)
     const finalIssue = issue || getCurrentWatchtowerIssue();
     const { files, pubName, formattedDate, language } = await fetchPublicationData(pub, langwritten, finalIssue, fileformat);
     

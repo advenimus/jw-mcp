@@ -64,7 +64,8 @@ const SECTION_CHARS = {
 
 // Special characters
 const SPECIAL_CHARS = {
-  'line': '\n',
+  // JW.org exports keep the print layout's manual wraps as \line, mid-sentence.
+  'line': ' ',
   'tab': '\t',
   'emdash': '\u2014',
   'endash': '\u2013',
@@ -284,103 +285,23 @@ export function rtfToText(text, encoding = 'windows-1252') {
 }
 
 /**
- * Clean and format text
+ * Whitespace and invisible-character cleanup only; never changes words.
+ * Strips control characters, soft hyphens and BOMs, turns any run of spaces,
+ * tabs or no-break spaces into one space, trims lines and keeps at most one
+ * blank line in a row. The text is the publication's own, in any language,
+ * so nothing is inserted, renamed or re-wrapped.
  */
 export function cleanAndFormatText(text) {
-  if (!text) {
-    return '';
-  }
-
-  // Remove control characters but preserve line breaks
-  text = text.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
-
-  // Convert non-breaking spaces to regular spaces
-  text = text.replace(/\xA0/g, ' ');
-
-  // Normalize whitespace (but preserve line breaks)
-  text = text.replace(/[^\S\n]+/g, ' ');
-
-  // Add proper line breaks before questions
-  text = text.replace(/(\d+-\d+\.)/g, '\n$1');
-  text = text.replace(/(\d+\.)/g, '\n$1');
-
-  // Add line breaks before numbered paragraphs
-  text = text.replace(/(\d+\s+[A-Z])/g, '\n$1');
-
-  // Ensure numbered paragraphs start with proper line breaks
-  text = text.replace(/([.!?])\s*(\d+\s+[A-Z])/g, '$1\n\n$2');
-
-  // Add line breaks before section headings
-  text = text.replace(/([a-z]\.?)([A-Z][a-z]+\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/g, '$1\n\n$2');
-
-  // Fix specific transitions
-  text = text.replace(/(truth\?)([A-Z])/g, '$1\n\n$2');
-  text = text.replace(/(Progress)([A-Z])/g, '$1\n\n$2');
-  text = text.replace(/(Jehovah)([A-Z])/g, '$1\n\n$2');
-
-  // Clean up study article formatting
-  text = text.replace(/Study Article\s*\d+/g, 'STUDY ARTICLE');
-  text = text.replace(/Song\s+\d+/g, 'SONG');
-
-  // Fix scripture references
-  text = text.replace(/1\s+Corinthians/g, '1 COR.');
-  text = text.replace(/Matthew/g, 'Matt.');
-  text = text.replace(/,footnote/g, ', ftn');
-
-  // Add answer placeholders
-  text = text.replace(/(\d+-\d+\.[^?]*\?)/g, '$1\n\nYour answers');
-  text = text.replace(/((?<!Your\s)\d+\.[^?]*\?)/g, '$1\n\nYour answer');
-
-  // Split into lines and clean
-  const lines = text.split('\n');
-  const cleanedLines = [];
-
-  for (let line of lines) {
-    line = line.trim();
-    if (line) {
-      line = line.replace(/\s+/g, ' ');
-      cleanedLines.push(line);
-    }
-  }
-
-  // Join with appropriate spacing
-  const result = [];
-  let prevLine = '';
-
-  for (const line of cleanedLines) {
-    if (!line) continue;
-
-    if (
-      line.startsWith('STUDY ARTICLE') ||
-      line.startsWith('SONG') ||
-      line.startsWith('HELP YOUR STUDENT') ||
-      line.startsWith('SHOW CONFIDENCE') ||
-      line.toUpperCase().startsWith('FOCUS')
-    ) {
-      if (prevLine) {
-        result.push('');
-      }
-      result.push(line);
-      result.push('');
-    } else if (/^\d+\s+/.test(line)) {
-      if (prevLine) {
-        result.push('');
-      }
-      result.push(line);
-    } else {
-      result.push(line);
-    }
-
-    prevLine = line;
-  }
-
-  let finalText = result.join('\n');
-
-  // Clean up excessive line breaks
-  finalText = finalText.replace(/\n{3,}/g, '\n\n');
-  finalText = finalText.trim();
-
-  return finalText;
+  if (!text) return '';
+  return String(text)
+    .replace(/\r\n?/g, '\n')
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F\u00AD\uFEFF]/g, '')
+    .replace(/[^\S\n]+/g, ' ')
+    .split('\n')
+    .map((l) => l.trim())
+    .join('\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
 }
 
 /**

@@ -1,29 +1,50 @@
 import { fetchWithTimeout } from './fetch-with-timeout.js';
 
-/**
- * Get current issue in YYYYMM00 format
- * For workbooks, this is the current month
- * For Watchtower, this needs to be 2 months behind (see getCurrentWatchtowerIssue)
- */
-export function getCurrentIssue() {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  return `${year}${month}00`;
+// The workbook has been bimonthly (odd-month issues only) since January 2021.
+const BIMONTHLY_FROM = 2021;
+
+/** Monday of the Mon–Sun meeting week that contains date. */
+function mondayOf(date) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate() - ((date.getDay() + 6) % 7));
+}
+
+function issueCode(year, monthIndex) {
+  const d = new Date(year, monthIndex, 1);
+  return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}00`;
 }
 
 /**
- * Get current Watchtower issue in YYYYMM00 format
- * Watchtower studies are 2 months ahead of publication date
- * So to get current studies, we need the issue from 2 months ago
+ * Workbook issue (YYYYMM00) that holds the meeting week containing date.
+ * A week belongs to the month of its Monday; since 2021 each issue covers
+ * two months and only odd months exist, so October is in the September
+ * issue and Dec 28–Jan 3 is in the November issue.
  */
-export function getCurrentWatchtowerIssue() {
-  const now = new Date();
-  // Subtract 2 months to get the correct Watchtower issue
-  const targetDate = new Date(now.getFullYear(), now.getMonth() - 2, 1);
-  const year = targetDate.getFullYear();
-  const month = String(targetDate.getMonth() + 1).padStart(2, '0');
-  return `${year}${month}00`;
+export function getCurrentIssue(date = new Date()) {
+  const monday = mondayOf(date);
+  const year = monday.getFullYear();
+  const month = monday.getMonth();
+  return issueCode(year, year >= BIMONTHLY_FROM ? month - (month % 2) : month);
+}
+
+/**
+ * Watchtower study-edition issue (YYYYMM00) that holds the study article
+ * for the week containing date. Issue M holds the studies for the weeks
+ * whose Monday is in month M+2 (August holds October's studies).
+ */
+export function getCurrentWatchtowerIssue(date = new Date()) {
+  const monday = mondayOf(date);
+  return issueCode(monday.getFullYear(), monday.getMonth() - 2);
+}
+
+/**
+ * A workbook issue as published: from 2021 an even month (20261000) has no
+ * issue of its own and becomes the odd-month issue that covers it (20260900).
+ * Anything else is returned unchanged.
+ */
+export function workbookIssue(issue) {
+  const m = /^(\d{4})(\d{2})00$/.exec(typeof issue === 'string' ? issue.trim() : '');
+  if (!m || Number(m[1]) < BIMONTHLY_FROM || Number(m[2]) % 2 === 1) return issue;
+  return issueCode(Number(m[1]), Number(m[2]) - 2);
 }
 
 /**
