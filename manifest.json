@@ -25,39 +25,44 @@
   "tools": [
     {
       "name": "search_bible_books",
-      "description": "Search for Bible books by name, abbreviation, or number"
+      "description": "Look up Bible books by name, abbreviation or number"
     },
     {
       "name": "get_bible_verse",
-      "description": "Get plain Bible verse text from wol.jw.org"
+      "description": "Get New World Translation verse text in many languages"
     },
     {
       "name": "get_verse_with_study",
-      "description": "Get comprehensive study content for Bible verses including study notes, cross-references, and research articles"
+      "description": "Get verses with study notes, footnotes, cross references and research articles"
     },
     {
       "name": "get_bible_verse_url",
-      "description": "Generate JW.org URLs for Bible verses, ranges, or chapters"
+      "description": "Build jw.org links for Bible references"
     },
     {
       "name": "getWorkbookLinks",
-      "description": "Get available Christian Life and Ministry workbook weeks"
+      "description": "List the weeks of a meeting workbook issue"
     },
     {
       "name": "getWorkbookContent",
-      "description": "Download and parse workbook content to clean plain text"
+      "description": "Read a week of the meeting workbook (this week by default)"
     },
     {
       "name": "getWatchtowerLinks",
-      "description": "Get available Watchtower study articles"
+      "description": "List the articles of a Watchtower study edition"
     },
     {
       "name": "getWatchtowerContent",
-      "description": "Download and parse Watchtower article content to clean plain text"
+      "description": "Read a Watchtower study article (this week by default)"
     },
     {
       "name": "get_jw_captions",
-      "description": "Fetch video captions and metadata from JW.org"
+      "description": "Get a JW.org video transcript and metadata"
     }
-  ]
+  ],
+  "compatibility": {
+    "runtimes": {
+      "node": ">=20.18.1"
+    }
+  }
 }
