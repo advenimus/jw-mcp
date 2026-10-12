@@ -7,6 +7,8 @@ An MCP server for working with JW.org content — Bible scripture lookup with st
 
 ## Quick Start
 
+Requires Node.js 20.18.1 or newer (Node 22 LTS recommended). On older Node the server prints the required version and exits.
+
 ### Claude Code (Recommended)
 
 ```bash
@@ -110,7 +112,21 @@ Cloudflare settings that can block AI connectors. Check them for this hostname:
 
 ## Tools
 
-All tools support multiple languages via the `langwritten` parameter (`E` = English, `S` = Spanish, `F` = French, etc.).
+### Languages
+
+The workbook and Watchtower tools take `langwritten` (default `E`, English). It accepts:
+
+- a JW.org language code: `E` English, `S` Spanish, `F` French, `T` Portuguese (Brazil), `X` German, `I` Italian, `J` Japanese, `KO` Korean, `CHS` Chinese (Simplified), `U` Russian, and so on;
+- an ISO tag such as `es`, `pt-BR` or `zh-Hant` (region subtags are dropped when needed, so `es-MX` gives `S`);
+- a language name in English or in the language itself, such as `Spanish` or `español`; word order and qualifiers are free (`Traditional Chinese`, `Brazilian Portuguese`, `Cantonese`), and an unknown name gets a "Did you mean" list.
+
+An all-caps value that is both a built-in language's ISO tag and another language's JW.org code is read as the ISO tag, with a `note` that says so: `TL` is Tagalog (pass `Tamil` or `ta` for Tamil, whose JW.org code is `TL`).
+
+19 common languages resolve instantly. Any other language is looked up in JW.org's language list (cached for a day). Not every publication exists in every language; when one is missing, the error says so.
+
+### Dates
+
+The workbook and Watchtower tools accept `date` as `YYYY-MM-DD` and default to today on the server, in its local time zone. A server running in UTC (Docker) can be a day off from the user, so pass the user's local date when it matters.
 
 ### Bible Scripture Tools
 
@@ -155,41 +171,37 @@ Generate JW.org URLs for verses, ranges, or chapters — useful for adding click
 
 ---
 
-### Workbook Tools
+### Meeting workbook and Watchtower study
 
-#### `getWorkbookLinks`
-Get available Christian Life and Ministry workbook weeks for the current or a specific issue.
-
-```json
-{ "issue": "20250500", "langwritten": "E" }
-```
-
-#### `getWorkbookContent`
-Download and parse a workbook week's RTF content to clean plain text (70% token reduction).
+One call gets the text. With no arguments, `getWorkbookContent` returns this week's midweek meeting and `getWatchtowerContent` returns this week's Watchtower study article.
 
 ```json
-{ "url": "https://cfp2.jw-cdn.org/a/clm_E_202505_01.rtf" }
+{}
+{ "date": "2026-11-16" }
+{ "langwritten": "S" }
+{ "issue": "20260900", "week": 2 }
 ```
+
+They return `{title, week_start, week_end, issue, pubName, language, langwritten, fileformat, url, link, parsedText}`. `url` is the source file and `link` the jw.org page to show or cite. For the workbook, `parsedText` is the meeting outline (songs, parts, minutes) followed by the scriptures and reference material JW.org inserts after each part. For the Watchtower, it is the article with its paragraphs, questions and review box. You can also pass `url`: the file `url` (an RTF or TXT link, not the jw.org `link`) of any entry from the Links tools. A `url` call returns the same fields: `title`, `week_start`/`week_end` when the title names a week, and `pubName`, `language` and `link` from the issue's listing (one cached request; when the listing cannot be loaded they are left out with a `note`). `links` lists the songs and publications the week links to; each song video link is followed by the song's lyrics page (`"Song 103 lyrics"`, a `finder?docid=` link), since song videos have no captions. For a week the issue skips, such as Memorial week in the workbook, the error says there is no meeting that week and gives the `url` of what the issue files there (the Memorial Bible Reading Schedule).
+
+`week` is the week number within the issue (from the Links tools), not the week of the month. `date` and `week` are alternatives: with both, `week` must be the week that holds `date`, or the call is an error naming the right week.
+
+A long file comes in pages: the result then has `offset`, `next_offset` and `total_chars`, and while `next_offset` is not null, call again with the same arguments and `offset` set to it. A page holds at most `max_chars` characters (default 60000, at most 80000; not in the tool schema) and about 20,000 tokens. Ordinary week files fit in one page and keep the shape above.
+
+How issues map to weeks: a week belongs to the month of its Monday. Workbook issues are bimonthly, odd months only (`20261100` covers November and December 2026). A Watchtower issue is studied two months after its month (the August 2026 issue, `20260800`, covers October 5 to November 1, 2026). Before 2016 the study edition was dated the 15th, so its issue codes are `YYYYMM15` (`20150115`); `20150100`, `201501` and dates in those years are read that way.
 
 ![Workbook Content Example](assets/images/get-clm-workbook-info.png)
 
----
+#### `getWorkbookLinks` / `getWatchtowerLinks`
 
-### Watchtower Tools
-
-#### `getWatchtowerLinks`
-Get available Watchtower study articles. Automatically uses the correct issue (published 2 months ahead of study period).
+List the weeks (workbook) or articles (Watchtower) of one issue, by default the issue that holds the current week. Each entry has `title`, `type` (`week`, `study` or `other`; absent for whole-issue formats such as PDF, EPUB and JWPUB), `week`, `week_start`, `week_end`, `is_current_week`, the file `url` and, when available, a jw.org `link`. `current_week` is the entry for this week (or for `date`); pass its `week` to the Content tools.
 
 ```json
-{ "issue": "20250300", "langwritten": "E" }
+{ "issue": "20260900", "langwritten": "E" }
+{ "date": "2026-10-11", "fileformat": "PDF" }
 ```
 
-#### `getWatchtowerContent`
-Download and parse a Watchtower article's RTF content to clean plain text (70% token reduction).
-
-```json
-{ "url": "https://cfp2.jw-cdn.org/a/w_E_202509_01.rtf" }
-```
+`fileformat` is `RTF` by default (TXT for languages that have no RTF). `PDF`, `EPUB`, `JWPUB`, `MP3`, `MP4`, `3GP`, `BRL` and `DAISY` return download links only; the Content tools read RTF and TXT. Sign-language editions (`ASL`, `BSL` ...) have no RTF or TXT: ask for `MP4` or `3GP`. Their entries carry `resolution` (`240p`, `720p`), and the files of one week share its `week` number. A listing returns at most 200 entries (`total_entries` gives the full count).
 
 ![Watchtower Content Example](assets/images/get-wt-info.png)
 
@@ -210,19 +222,45 @@ Also accepts full JW.org URLs — the video ID is extracted automatically.
 
 ---
 
+## Upgrading from 1.3
+
+- Node.js 20.18.1 or newer is required (it was 18).
+- A tool call that fails unexpectedly names the tool and ends with a `Next step:` hint (1.3.3 returned the bare JavaScript error).
+- Argument names are checked: `lang` and `language` mean `langwritten` on every tool that has it, and `link` means `url`. An argument that looks like a misspelt parameter (`langauge`, `field` for `fields`) or a language under another name (`locale`, `wtlocale`) is an error that names the parameter you probably meant. Any other unknown argument is ignored, as in 1.3.3, and the result ends with a note naming it.
+
+- Workbook and Watchtower link entries no longer carry `filesize`, `checksum`, `modifiedDatetime` or `track` (use `week`). Content results for a `url` no longer carry `contentType`, `originalSize` or `parsedSize`, and `parsedText` no longer has the "Your answer" placeholder lines. The Content tools take `date`, `issue` + `week` or `langwritten` directly, so the Links step is optional. Their JSON results are compact (no indentation).
+- `langwritten` also accepts ISO tags and names, and a two-letter all-caps value that is both a built-in ISO tag and another language's JW.org code is read as the ISO tag: `TL` is Tagalog (was Tamil), `RU` Russian (was Kirundi), and likewise `EN`, `FR`, `IT`, `JA`, `UK`, `VI`, `ID`, `AR`. The result's `note` says so; pass the language name (`Tamil`) or ISO tag (`ta`) for the other language.
+- The workbook and Watchtower helpers `getWorkbookLinks`/`getWorkbookContent` (workbook-tools.js), `getWatchtowerLinks`/`getWatchtowerContent` (watchtower-tools.js), `downloadRtfContent`, `fetchPublicationData`, `getCurrentIssue`, `getCurrentWatchtowerIssue` and `workbookIssue` (rtf-utils.js) are gone. jw-mcp is an MCP server, not a library: call the tools instead.
+
+All tool names and earlier parameter names still work.
+
+## Configuration
+
+| Variable | Default | Description |
+|---|---|---|
+| `JW_MCP_FETCH_TIMEOUT_MS` | `20000` | Time limit for each request to JW.org, including reading the response (max 600000; a larger value is capped with a warning). The workbook and Watchtower tools also have an overall budget per call: twice this value, at least 50 s. |
+| `MCP_TRANSPORT` | `stdio` | `http` for the Docker/remote mode described above. |
+
+Results from JW.org are cached in memory: workbook and Watchtower listings and files for 1 hour, and the language list for a day.
+
 ## Troubleshooting
 
-1. **"Could not read package.json"** — Use absolute path in Claude Desktop config
-2. **Server disconnects** — Ensure Node.js is installed (`npm install`)
-3. **Permission denied** — `chmod +x start-server.sh`
+1. **"jw-mcp requires Node >=20.18.1"**: install Node 22 LTS (or 20.18.1+) and restart the client.
+2. **"Could not read package.json"**: use an absolute path in the Claude Desktop config.
+3. **Server disconnects**: make sure Node.js is installed and run `npm install`.
+4. **Permission denied**: `chmod +x start-server.sh`.
+5. **"returned 403 Forbidden ... JW.org refused the request"** on every tool: JW.org's CDN is refusing this server's network, which happens on VPNs and datacenter IP ranges, or after many requests. Wait a few minutes, or run jw-mcp from another network.
 
 ## Development
 
 ```bash
-npm start          # stdio mode (local)
-npm run start:http # HTTP mode (testing)
-npm test           # OAuth + HTTP connector tests
+npm start              # stdio mode (local)
+npm run start:http     # HTTP mode (testing)
+npm test               # offline tests: OAuth, HTTP connector, tools, the assembled server
+npm run test:live      # live tests against JW.org (sets JW_MCP_LIVE=1)
 ```
+
+The offline tests never touch the network: they stub `fetch` and use small synthetic fixtures. The live tests under `tests/live/` skip unless `JW_MCP_LIVE=1`.
 
 Built with Node.js, MCP SDK, node-fetch, and cheerio.
 

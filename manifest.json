@@ -41,23 +41,28 @@
     },
     {
       "name": "getWorkbookLinks",
-      "description": "Get available Christian Life and Ministry workbook weeks"
+      "description": "List the weeks of a meeting workbook issue"
     },
     {
       "name": "getWorkbookContent",
-      "description": "Download and parse workbook content to clean plain text"
+      "description": "Read a week of the meeting workbook (this week by default)"
     },
     {
       "name": "getWatchtowerLinks",
-      "description": "Get available Watchtower study articles"
+      "description": "List the articles of a Watchtower study edition"
     },
     {
       "name": "getWatchtowerContent",
-      "description": "Download and parse Watchtower article content to clean plain text"
+      "description": "Read a Watchtower study article (this week by default)"
     },
     {
       "name": "get_jw_captions",
       "description": "Fetch video captions and metadata from JW.org"
     }
-  ]
+  ],
+  "compatibility": {
+    "runtimes": {
+      "node": ">=20.18.1"
+    }
+  }
 }

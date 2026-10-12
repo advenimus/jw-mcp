@@ -1,5 +1,13 @@
 #!/usr/bin/env node
-import { createMcpServer } from './mcp-server.js';
+// cheerio and undici need Node 20.18.1 or newer. On older Node they crash while
+// loading ("File is not defined"), so check before importing anything else.
+const MIN_NODE = [20, 18, 1];
+const found = process.versions.node.split('.').map(Number);
+const diff = MIN_NODE.map((n, i) => (found[i] ?? 0) - n).find((d) => d !== 0) ?? 0;
+if (diff < 0) {
+  console.error(`jw-mcp requires Node >=${MIN_NODE.join('.')} (found v${process.versions.node}). Install Node 22 LTS, then start jw-mcp again.`);
+  process.exit(1);
+}
 
 const transport = process.env.MCP_TRANSPORT || 'stdio';
 
@@ -10,6 +18,7 @@ if (transport === 'http') {
   const { StdioServerTransport } = await import(
     '@modelcontextprotocol/sdk/server/stdio.js'
   );
+  const { createMcpServer } = await import('./mcp-server.js');
 
   const server = createMcpServer();
   const stdioTransport = new StdioServerTransport();
