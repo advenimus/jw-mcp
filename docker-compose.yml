@@ -21,6 +21,7 @@ services:
       - MCP_AUTH=${MCP_AUTH:-true}
       - MCP_TRUST_PROXY=${MCP_TRUST_PROXY:-}
       - AUTH_STORE_PATH=/data/auth.json
+      - JW_MCP_FETCH_TIMEOUT_MS=${JW_MCP_FETCH_TIMEOUT_MS:-}
     volumes:
       - jw-mcp-auth:/data
 

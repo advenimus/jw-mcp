@@ -1,84 +1,42 @@
-import { fetchPublicationData, downloadRtfContent, getCurrentIssue } from './rtf-utils.js';
-import { parseRTF } from './rtf-parser.js';
+import { FILE_FORMATS, WORKBOOK_TOOLS, periodicalContent, periodicalLinks } from './rtf-utils.js';
+import { LANGWRITTEN_DESCRIPTION } from './languages.js';
+import { wrapTool } from './results.js';
 
-/**
- * Get available workbook links for a specific issue
- */
-export async function getWorkbookLinks(pub = 'mwb', langwritten = 'E', issue = null, fileformat = 'RTF') {
-  try {
-    const { files, pubName, formattedDate, language } = await fetchPublicationData(pub, langwritten, issue, fileformat);
-    
-    // Skip the first item (ZIP file) and return the individual week files
-    const weekFiles = files.slice(1).map((file, index) => ({
-      title: file.title,
-      url: file.file.url,
-      filesize: file.filesize,
-      track: file.track,
-      modifiedDatetime: file.file.modifiedDatetime,
-      checksum: file.file.checksum
-    }));
+const LANG = { type: 'string', description: LANGWRITTEN_DESCRIPTION };
+const DATE = { type: 'string', description: 'YYYY-MM-DD in the week. Default: today (server time).' };
+// max_chars (default 60000) is accepted but left out of the schema to keep tools/list small.
+const OFFSET = { type: 'integer', minimum: 0, description: 'next_offset of the last call.' };
 
-    return {
-      pubName,
-      formattedDate,
-      issue: issue || getCurrentIssue(),
-      language,
-      weekFiles
-    };
+export const getWorkbookLinksImplementation = wrapTool(
+  (args) => periodicalLinks(args, WORKBOOK_TOOLS),
+  'getWorkbookLinks'
+);
 
-  } catch (error) {
-    throw new Error(`Failed to fetch workbook links: ${error.message}`);
-  }
-}
-
-/**
- * Fetch RTF content from a given URL and parse it to plain text
- */
-export async function getWorkbookContent(url) {
-  const rtfData = await downloadRtfContent(url);
-
-  try {
-    // Parse RTF to plain text
-    const parsedText = parseRTF(rtfData.content);
-
-    return {
-      url: rtfData.url,
-      contentType: rtfData.contentType,
-      originalSize: rtfData.size,
-      parsedText: parsedText,
-      parsedSize: parsedText.length
-    };
-  } catch (error) {
-    throw new Error(`Failed to parse RTF content: ${error.message}`);
-  }
-}
+export const getWorkbookContentImplementation = wrapTool(
+  (args) => periodicalContent(args, WORKBOOK_TOOLS),
+  'getWorkbookContent'
+);
 
 // Tool definitions for the MCP server
 export const workbookTools = [
   {
     name: 'getWorkbookLinks',
-    description: 'STEP 1: Get JW.org "Our Christian Life and Ministry" (CLM) meeting workbook weeks. When a user asks for CLM workbook content, use this tool FIRST to show them available weeks. Returns weekly titles like "May 5-11 (Proverbs 12)" with their RTF download URLs. Automatically uses current month/year for the issue.',
+    description:
+      'Weeks of one Our Christian Life and Ministry workbook issue: title, week, week_start/week_end, is_current_week, file url, jw.org link. Default: the issue for today (or date). Not needed to read a week: getWorkbookContent takes date or issue + week.',
     inputSchema: {
       type: 'object',
       properties: {
-        pub: {
-          type: 'string',
-          description: 'Publication code: "mwb" for Meeting Workbook (CLM workbook)',
-          default: 'mwb'
-        },
-        langwritten: {
-          type: 'string', 
-          description: 'Language code: "E" for English, "S" for Spanish, etc.',
-          default: 'E'
-        },
+        langwritten: LANG,
+        date: DATE,
         issue: {
           type: 'string',
-          description: 'Issue in YYYYMM00 format. Leave empty to use current month/year automatically (e.g., "20250500" for May 2025)'
+          description:
+            'YYYYMM00 or YYYYMM; odd months only (20261100 = Nov–Dec 2026), an even month means the issue holding it. Default: the issue for date.'
         },
         fileformat: {
           type: 'string',
-          description: 'File format: "RTF" for Rich Text Format',
-          default: 'RTF'
+          enum: [...FILE_FORMATS],
+          description: 'Default RTF, else TXT. Others give download links only.'
         }
       },
       required: []
@@ -86,88 +44,32 @@ export const workbookTools = [
   },
   {
     name: 'getWorkbookContent',
-    description: 'STEP 2: Get the actual CLM workbook content after user chooses a week. Use this tool AFTER getWorkbookLinks when user specifies which week they want (e.g., "May 5-11" or "June 30-July 6"). Takes the RTF URL from Step 1 results, downloads the RTF file, parses it to clean plain text, and returns the formatted workbook content with proper line breaks and structure.',
+    description:
+      'Text of one meeting-workbook week. No arguments: this week; date: that day\'s week; issue + week; or url from getWorkbookLinks. Returns title, week_start/week_end, issue, url (source file), link (jw.org page to cite), links (songs, cited publications) and parsedText (outline with songs, parts, minutes; then the scriptures). Long text: offset = next_offset until null.',
     inputSchema: {
       type: 'object',
       properties: {
-        url: {
-          type: 'string',
-          description: 'The RTF file URL from getWorkbookLinks results (e.g., "https://cfp2.jw-cdn.org/a/...")'
-        }
+        date: DATE,
+        langwritten: LANG,
+        issue: { type: 'string', description: 'YYYYMM00 (see getWorkbookLinks). Default: the issue for date.' },
+        week: { type: 'integer', minimum: 1, maximum: 20, description: 'Week in the issue (from getWorkbookLinks), not in the month; with date it must match.' },
+        url: { type: 'string', description: 'url (not link) of a getWorkbookLinks entry; overrides the rest.' },
+        offset: OFFSET
       },
-      required: ['url']
+      required: []
     }
   }
 ];
 
 // Tool handlers
 export async function handleWorkbookTools(request) {
-  // Handle getWorkbookLinks tool
-  if (request.params.name === 'getWorkbookLinks') {
-    try {
-      const { pub, langwritten, issue, fileformat } = request.params.arguments || {};
-      const result = await getWorkbookLinks(pub, langwritten, issue, fileformat);
-      
-      return {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify(result, null, 2),
-          },
-        ],
-      };
-    } catch (error) {
-      return {
-        content: [
-          {
-            type: 'text',
-            text: `Error: ${error.message}`,
-          },
-        ],
-        isError: true,
-      };
-    }
+  const args = request.params.arguments;
+  switch (request.params.name) {
+    case 'getWorkbookLinks':
+      return await getWorkbookLinksImplementation(args);
+    case 'getWorkbookContent':
+      return await getWorkbookContentImplementation(args);
+    default:
+      return null;
   }
-
-  // Handle getWorkbookContent tool  
-  if (request.params.name === 'getWorkbookContent') {
-    try {
-      const { url } = request.params.arguments;
-      
-      if (!url) {
-        return {
-          content: [
-            {
-              type: 'text',
-              text: 'Error: URL parameter is required',
-            },
-          ],
-          isError: true,
-        };
-      }
-      
-      const result = await getWorkbookContent(url);
-      
-      return {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify(result, null, 2),
-          },
-        ],
-      };
-    } catch (error) {
-      return {
-        content: [
-          {
-            type: 'text',
-            text: `Error: ${error.message}`,
-          },
-        ],
-        isError: true,
-      };
-    }
-  }
-
-  return null;
 }
