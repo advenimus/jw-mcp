@@ -132,7 +132,7 @@ When `MCP_AUTH` is not `false` and `MCP_AUTH_SECRET` is set:
 - Optional file store at `AUTH_STORE_PATH` (Docker default `/data/auth.json`)
 
 ### RTF Parsing
-Tools that fetch RTF files (Workbook, Watchtower) use `rtf-parser.js` to convert RTF markup to clean plain text, achieving ~70% token reduction.
+Tools that fetch RTF files (Workbook, Watchtower) use `rtf-parser.js` to convert RTF markup to plain text, one line per paragraph, achieving ~70% token reduction. The cleanup only normalizes whitespace: the text is the publication's own, in any language. Do not post-process it with heuristics (they used to insert "Your answer" lines, split references and rename songs).
 
 ### Bible Scripture Tools
 - Use `bible-books.js` for book number/name mappings (1-66)
@@ -141,10 +141,11 @@ Tools that fetch RTF files (Workbook, Watchtower) use `rtf-parser.js` to convert
 - Bible verse URLs use jw.org/finder format with zero-padded encoding (e.g., book 19, chapter 83, verse 18 → `19083018`)
 
 ### Date Handling
-- **Workbook**: Uses current month (e.g., May 2025 = `20250500`)
-- **Watchtower**: Uses issue from 2 months ago (e.g., May 2025 = `20250300`)
+- The default issue is the one that holds the current meeting week. A week (Monday to Sunday) belongs to the month of its Monday.
+- **Workbook**: bimonthly since 2021, odd months only, so the issue is the Monday's month rounded down to an odd month (`20261100` covers November–December 2026; Dec 28–Jan 3 is in the November issue). An even-month `issue` is read as the odd-month issue that covers it (`workbookIssue`).
+- **Watchtower**: issue M holds the study weeks whose Monday falls in month M+2 (the August 2026 issue covers October 5 to November 1, 2026)
   - Watchtower studies are published 2 months ahead of their study period
-  - Automatically handles year boundaries (January 2025 → November 2024)
+  - Year boundaries are handled (the week of Monday Dec 28, 2026 → October 2026 issue)
 
 ## MCP Response Format
 

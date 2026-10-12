@@ -158,14 +158,14 @@ Generate JW.org URLs for verses, ranges, or chapters — useful for adding click
 ### Workbook Tools
 
 #### `getWorkbookLinks`
-Get available Christian Life and Ministry workbook weeks for the current or a specific issue.
+Get available Christian Life and Ministry workbook weeks for the current or a specific issue. With no issue it uses the issue that holds this week's meeting. Workbook issues are bimonthly (odd months only) since 2021, so an even month such as `20261000` is read as the issue that covers it (`20260900`).
 
 ```json
 { "issue": "20250500", "langwritten": "E" }
 ```
 
 #### `getWorkbookContent`
-Download and parse a workbook week's RTF content to clean plain text (70% token reduction).
+Download and parse a workbook week's RTF content to plain text: one line per paragraph, the document's own words (70% token reduction).
 
 ```json
 { "url": "https://cfp2.jw-cdn.org/a/clm_E_202505_01.rtf" }
@@ -178,14 +178,14 @@ Download and parse a workbook week's RTF content to clean plain text (70% token 
 ### Watchtower Tools
 
 #### `getWatchtowerLinks`
-Get available Watchtower study articles. Automatically uses the correct issue (published 2 months ahead of study period).
+Get available Watchtower study articles. With no issue it uses the issue that holds this week's study article (issues are published 2 months ahead of the study period).
 
 ```json
 { "issue": "20250300", "langwritten": "E" }
 ```
 
 #### `getWatchtowerContent`
-Download and parse a Watchtower article's RTF content to clean plain text (70% token reduction).
+Download and parse a Watchtower article's RTF content to plain text: one line per paragraph, the document's own words (70% token reduction).
 
 ```json
 { "url": "https://cfp2.jw-cdn.org/a/w_E_202509_01.rtf" }

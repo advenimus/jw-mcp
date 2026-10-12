@@ -1,4 +1,4 @@
-import { fetchPublicationData, downloadRtfContent, getCurrentIssue } from './rtf-utils.js';
+import { fetchPublicationData, downloadRtfContent, getCurrentIssue, workbookIssue } from './rtf-utils.js';
 import { parseRTF } from './rtf-parser.js';
 
 /**
@@ -6,7 +6,10 @@ import { parseRTF } from './rtf-parser.js';
  */
 export async function getWorkbookLinks(pub = 'mwb', langwritten = 'E', issue = null, fileformat = 'RTF') {
   try {
-    const { files, pubName, formattedDate, language } = await fetchPublicationData(pub, langwritten, issue, fileformat);
+    // Default: the issue that holds this week's meeting.
+    const requested = issue || getCurrentIssue();
+    const finalIssue = pub === 'mwb' ? workbookIssue(requested) : requested;
+    const { files, pubName, formattedDate, language } = await fetchPublicationData(pub, langwritten, finalIssue, fileformat);
     
     // Skip the first item (ZIP file) and return the individual week files
     const weekFiles = files.slice(1).map((file, index) => ({
@@ -21,7 +24,10 @@ export async function getWorkbookLinks(pub = 'mwb', langwritten = 'E', issue = n
     return {
       pubName,
       formattedDate,
-      issue: issue || getCurrentIssue(),
+      issue: finalIssue,
+      ...(finalIssue !== requested
+        ? { note: `Workbook issues are bimonthly (odd months only), so issue ${requested} was read as ${finalIssue}, the issue that covers that month.` }
+        : {}),
       language,
       weekFiles
     };
@@ -57,7 +63,7 @@ export async function getWorkbookContent(url) {
 export const workbookTools = [
   {
     name: 'getWorkbookLinks',
-    description: 'STEP 1: Get JW.org "Our Christian Life and Ministry" (CLM) meeting workbook weeks. When a user asks for CLM workbook content, use this tool FIRST to show them available weeks. Returns weekly titles like "May 5-11 (Proverbs 12)" with their RTF download URLs. Automatically uses current month/year for the issue.',
+    description: 'STEP 1: Get JW.org "Our Christian Life and Ministry" (CLM) meeting workbook weeks. When a user asks for CLM workbook content, use this tool FIRST to show them available weeks. Returns weekly titles like "May 5-11 (Proverbs 12)" with their RTF download URLs. Leave issue empty for the issue that holds the current week.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -73,7 +79,7 @@ export const workbookTools = [
         },
         issue: {
           type: 'string',
-          description: 'Issue in YYYYMM00 format. Leave empty to use current month/year automatically (e.g., "20250500" for May 2025)'
+          description: 'Issue in YYYYMM00 format. Since 2021 issues are bimonthly and exist for odd months only ("20260900" covers September and October 2026); an even month is read as the issue that covers it. Leave empty for the issue that holds the current week.'
         },
         fileformat: {
           type: 'string',
