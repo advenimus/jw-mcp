@@ -8,17 +8,37 @@ import * as cheerio from 'cheerio';
 import { fetchWithTimeout } from './fetch-with-timeout.js';
 import { getBookName } from './bible-books.js';
 
+// wol.jw.org sits behind AWS WAF, which answers any browser-looking
+// User-Agent with a JavaScript challenge page (HTTP 202, no content) that a
+// server cannot solve. A plain client name gets the real page. Do not switch
+// back to a browser User-Agent. Accept-Language is kept because the site has
+// previously stalled on requests without it.
+const USER_AGENT = 'jw-mcp';
+
+const CHALLENGE_STATUS = 202;
+const CHALLENGE_MARKERS = ['AwsWafIntegration', 'awsWafCookieDomainList', 'challenge-container'];
+
+export class WOLBlockedError extends Error {
+  constructor(url) {
+    super(`wol.jw.org blocked the request with a bot challenge page: ${url}`);
+    this.name = 'WOLBlockedError';
+    this.url = url;
+  }
+}
+
+export function isBotChallenge(status, html) {
+  if (status === CHALLENGE_STATUS) return true;
+  return CHALLENGE_MARKERS.some(marker => html.includes(marker));
+}
+
 /**
  * WOL Scraper class for extracting Bible study content
  */
 export class WOLScraper {
-  constructor() {
-    // wol.jw.org (Akamai) stalls indefinitely on requests that send a browser
-    // User-Agent without Accept-Language. That header is the one verified to
-    // unblock it (3/3 hangs without, 3/3 sub-100ms with); Accept is sent
-    // alongside to match a real browser. Do not drop Accept-Language.
+  constructor({ fetchFn = fetchWithTimeout } = {}) {
+    this.fetchFn = fetchFn;
     this.headers = {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+      'User-Agent': USER_AGENT,
       'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
       'Accept-Language': 'en-US,en;q=0.9'
     };
@@ -36,7 +56,7 @@ export class WOLScraper {
     try {
       console.error(`[scraper] Fetching ${url}`);
       const fetchStart = Date.now();
-      const response = await fetchWithTimeout(url, { headers: this.headers });
+      const response = await this.fetchFn(url, { headers: this.headers });
 
       const fetchDuration = Date.now() - fetchStart;
       console.error(`[scraper] Fetch response: ${response.status} ${response.statusText} in ${fetchDuration}ms`);
@@ -47,6 +67,10 @@ export class WOLScraper {
 
       const html = await response.text();
       console.error(`[scraper] HTML size: ${html.length} chars`);
+
+      if (isBotChallenge(response.status, html)) {
+        throw new WOLBlockedError(url);
+      }
       const $ = cheerio.load(html);
 
       // Extract chapter-level study data
@@ -84,6 +108,7 @@ export class WOLScraper {
 
     } catch (error) {
       console.error(`[scraper] Failed ${bookNum}:${chapterNum} — ${error.message}`);
+      if (error instanceof WOLBlockedError) throw error;
       throw new Error(`Failed to extract content for ${bookNum}:${chapterNum} - ${error.message}`);
     }
   }
@@ -96,40 +121,30 @@ export class WOLScraper {
    * @returns {Array} Array of verse objects
    */
   extractVerses($, bookNum, chapterNum) {
-    const verses = [];
+    // Span ids are v{book}-{chapter}-{verse}-{line}. Poetry (Psalms, Proverbs,
+    // etc.) splits one verse over several line spans, so join them by verse.
+    const linesByVerse = new Map();
 
-    // Find all verse elements
     $('span.v').each((i, elem) => {
-      try {
-        const verseId = $(elem).attr('id');
-        if (!verseId) return;
+      const verseId = $(elem).attr('id');
+      if (!verseId) return;
 
-        // Parse verse ID (format: v{book}-{chapter}-{verse})
-        const parts = verseId.replace('v', '').split('-');
-        if (parts.length >= 3) {
-          const vBook = parseInt(parts[0]);
-          const vChapter = parseInt(parts[1]);
-          const vVerse = parseInt(parts[2]);
+      const [vBook, vChapter, vVerse] = verseId.replace('v', '').split('-').map(Number);
+      if (vBook !== bookNum || vChapter !== chapterNum || Number.isNaN(vVerse)) return;
 
-          if (vBook === bookNum && vChapter === chapterNum) {
-            // Get verse text
-            const verseText = $(elem).text().trim();
+      const lineText = $(elem).text().trim();
+      if (!lineText) return;
 
-            verses.push({
-              book_num: bookNum,
-              book_name: getBookName(bookNum),
-              chapter: chapterNum,
-              verse_num: vVerse,
-              verse_text: verseText
-            });
-          }
-        }
-      } catch (error) {
-        console.error(`Error parsing verse: ${error.message}`);
-      }
+      linesByVerse.set(vVerse, [...(linesByVerse.get(vVerse) ?? []), lineText]);
     });
 
-    return verses;
+    return [...linesByVerse].map(([verseNum, lines]) => ({
+      book_num: bookNum,
+      book_name: getBookName(bookNum),
+      chapter: chapterNum,
+      verse_num: verseNum,
+      verse_text: lines.join(' ')
+    }));
   }
 
   /**
