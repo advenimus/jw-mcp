@@ -12,8 +12,8 @@ const CHALLENGE_HTML = `<!DOCTYPE html><html><head>
 <script>AwsWafIntegration.saveReferrer();</script></body></html>`;
 
 const CHAPTER_HTML = `<!DOCTYPE html><html><body>
-<span class="v" id="v43-3-16">16 For God loved the world so much</span>
-<span class="v" id="v43-3-17">17 For God did not send his Son</span>
+<span class="v" id="v43-3-16-1">16 For God loved the world so much</span>
+<span class="v" id="v43-3-17-1">17 For God did not send his Son</span>
 </body></html>`;
 
 function fakeResponse(status, body) {
@@ -110,4 +110,20 @@ test('HTTP errors still raise a plain error', async () => {
     assert.match(error.message, /HTTP 500/);
     return true;
   });
+});
+
+test('WAF challenge served with a non-2xx status is still reported as blocked', async () => {
+  const scraper = scraperReturning(405, CHALLENGE_HTML);
+  await assert.rejects(scraper.extractChapterContent(43, 3), WOLBlockedError);
+});
+
+test('verse spans with a malformed id are skipped', async () => {
+  const html = `<html><body>
+<span class="v" id="v43-3">stray</span>
+<span class="v" id="v43-3-">empty verse</span>
+<span class="v" id="v43-3-16-1">16 For God loved the world so much</span>
+</body></html>`;
+  const scraper = scraperReturning(200, html);
+  const { verses } = await scraper.extractChapterContent(43, 3);
+  assert.deepEqual(verses.map(v => v.verse_num), [16]);
 });

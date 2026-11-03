@@ -8,11 +8,7 @@ import * as cheerio from 'cheerio';
 import { fetchWithTimeout } from './fetch-with-timeout.js';
 import { getBookName } from './bible-books.js';
 
-// wol.jw.org sits behind AWS WAF, which answers any browser-looking
-// User-Agent with a JavaScript challenge page (HTTP 202, no content) that a
-// server cannot solve. A plain client name gets the real page. Do not switch
-// back to a browser User-Agent. Accept-Language is kept because the site has
-// previously stalled on requests without it.
+// AWS WAF serves an unsolvable JS challenge to browser User-Agents; keep this plain name.
 const USER_AGENT = 'jw-mcp';
 
 const CHALLENGE_STATUS = 202;
@@ -40,6 +36,7 @@ export class WOLScraper {
     this.headers = {
       'User-Agent': USER_AGENT,
       'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      // The site has stalled on requests without Accept-Language; do not drop it.
       'Accept-Language': 'en-US,en;q=0.9'
     };
   }
@@ -61,16 +58,17 @@ export class WOLScraper {
       const fetchDuration = Date.now() - fetchStart;
       console.error(`[scraper] Fetch response: ${response.status} ${response.statusText} in ${fetchDuration}ms`);
 
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-
       const html = await response.text();
       console.error(`[scraper] HTML size: ${html.length} chars`);
 
       if (isBotChallenge(response.status, html)) {
         throw new WOLBlockedError(url);
       }
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
       const $ = cheerio.load(html);
 
       // Extract chapter-level study data
@@ -121,8 +119,7 @@ export class WOLScraper {
    * @returns {Array} Array of verse objects
    */
   extractVerses($, bookNum, chapterNum) {
-    // Span ids are v{book}-{chapter}-{verse}-{line}. Poetry (Psalms, Proverbs,
-    // etc.) splits one verse over several line spans, so join them by verse.
+    // Ids are v{book}-{chapter}-{verse}-{line}; poetry splits a verse over several lines.
     const linesByVerse = new Map();
 
     $('span.v').each((i, elem) => {
@@ -130,7 +127,7 @@ export class WOLScraper {
       if (!verseId) return;
 
       const [vBook, vChapter, vVerse] = verseId.replace('v', '').split('-').map(Number);
-      if (vBook !== bookNum || vChapter !== chapterNum || Number.isNaN(vVerse)) return;
+      if (vBook !== bookNum || vChapter !== chapterNum || !Number.isInteger(vVerse) || vVerse < 1) return;
 
       const lineText = $(elem).text().trim();
       if (!lineText) return;
