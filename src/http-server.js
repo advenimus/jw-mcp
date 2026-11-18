@@ -259,7 +259,19 @@ function createMcpHandler(sessions, { maxSessions, sessionIdleMs }) {
         return;
       }
 
-      if (!sessionId && isInitializeRequest(req.body)) {
+      // Unknown session: it expired, or the server restarted. The MCP spec
+      // (Streamable HTTP, session management) says to answer 404, which tells
+      // the client to start a new session. A 400 leaves the client stuck.
+      if (sessionId) {
+        res.status(404).json({
+          jsonrpc: '2.0',
+          error: { code: -32001, message: 'Session not found. Start a new session.' },
+          id: null,
+        });
+        return;
+      }
+
+      if (isInitializeRequest(req.body)) {
         if (Object.keys(sessions).length >= maxSessions) {
           res.status(429).json({ error: 'Too many sessions' });
           return;
