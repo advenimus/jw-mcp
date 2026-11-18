@@ -1,5 +1,6 @@
 import { createServer } from 'node:net';
 import http from 'node:http';
+import { randomUUID } from 'node:crypto';
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHttpApp } from '../src/http-server.js';
@@ -385,7 +386,66 @@ describe('HTTP session limits', () => {
         method: 'tools/list',
         params: {},
       });
-      assert.equal(tools.status, 400);
+      // 404, not 400: the MCP spec tells clients to start a new session on 404.
+      assert.equal(tools.status, 404);
+      assert.equal(tools.body.error.code, -32001);
+    } finally {
+      await ctx.close();
+    }
+  });
+
+  it('answers 404 for a session the server never had, like after a restart', async () => {
+    const ctx = await startTestServer();
+    try {
+      const { tokens } = await completeOAuthHandshake(ctx.origin, SECRET);
+      const stale = await mcpRpc(ctx.mcpUrl, tokens.access_token, randomUUID(), {
+        jsonrpc: '2.0',
+        id: 2,
+        method: 'tools/list',
+        params: {},
+      });
+      assert.equal(stale.status, 404);
+      assert.equal(stale.body.jsonrpc, '2.0');
+      assert.equal(stale.body.id, null);
+    } finally {
+      await ctx.close();
+    }
+  });
+
+  it('lets a client recover after a 404 by starting a new session', async () => {
+    const ctx = await startTestServer({ sessionIdleMs: 30 });
+    try {
+      const { tokens } = await completeOAuthHandshake(ctx.origin, SECRET);
+      const first = await mcpRpc(ctx.mcpUrl, tokens.access_token, undefined, initializeMessage(1));
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      const expired = await mcpRpc(ctx.mcpUrl, tokens.access_token, first.sessionId, {
+        jsonrpc: '2.0',
+        id: 2,
+        method: 'tools/list',
+        params: {},
+      });
+      assert.equal(expired.status, 404);
+
+      const second = await mcpRpc(ctx.mcpUrl, tokens.access_token, undefined, initializeMessage(3));
+      assert.equal(second.status, 200);
+      assert.ok(second.sessionId);
+      assert.notEqual(second.sessionId, first.sessionId);
+    } finally {
+      await ctx.close();
+    }
+  });
+
+  it('still answers 400 for a non-initialize request with no session ID', async () => {
+    const ctx = await startTestServer();
+    try {
+      const { tokens } = await completeOAuthHandshake(ctx.origin, SECRET);
+      const response = await mcpRpc(ctx.mcpUrl, tokens.access_token, undefined, {
+        jsonrpc: '2.0',
+        id: 2,
+        method: 'tools/list',
+        params: {},
+      });
+      assert.equal(response.status, 400);
     } finally {
       await ctx.close();
     }
